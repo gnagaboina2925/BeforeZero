@@ -1,4 +1,5 @@
-import type { ComplicationKind, PlanDependency } from "./types.ts";
+import { getHazardConfig } from "./hazards.ts";
+import type { ComplicationKind, PlanDependency, PlanHazardId } from "./types.ts";
 
 interface MethodPattern {
   id: string;
@@ -34,7 +35,15 @@ const SUPPORT_TERMS = [
   "support network",
 ];
 
+const SHELTER_TERMS = ["safe room", "storm cellar", "interior room", "basement", "lowest floor"];
+const EXIT_TERMS = ["front door", "back door", "side door", "bedroom door", "hallway door", "window", "exit", "way out"];
+const ALARM_TERMS = ["smoke alarm", "fire alarm", "strobe", "alarm"];
 const ELEVATOR_TERMS = ["elevator", "lift"];
+const ACCESS_UNRESOLVED =
+  /\b(cannot get to|can't get to|can not get to|cannot reach|can't reach|haven'?t arranged how|have not arranged how|has not arranged how|hasn't arranged how|not sure how I would get|cannot use (the )?stairs|can't use (the )?stairs|haven'?t planned how to (reach|get)|have not planned how to (reach|get)|no way to get to|cannot access|can't access|have not arranged access|unresolved access)\b/i;
+const PERCEPTION_LIMIT =
+  /\b(may not hear|might not hear|cannot hear|can't hear|do not hear|don't hear|will not hear|won't hear|may not see|might not see|cannot see|can't see|do not see|don't see|may not notice|might not notice|cannot notice|can't notice|may not perceive|might not perceive|cannot perceive|can't perceive|hard of hearing|deaf|visually impaired|may miss|might miss)\b/i;
+
 
 const HEDGE_PATTERN = /\b(might|maybe|not sure|unsure|possibly|i think|or something|kind of)\b/i;
 const SUPPORT_FAILURE_AFTER =
@@ -73,11 +82,18 @@ export function detectCommMethods(utterance: string): string[] {
   return methods;
 }
 
-export function utteranceSupportsKind(kind: ComplicationKind, utterance: string): boolean {
-  return detectDependenciesFromText(utterance).some((item) => item.kind === kind);
+export function utteranceSupportsKind(
+  kind: ComplicationKind,
+  utterance: string,
+  hazardId: PlanHazardId = "hurricane",
+): boolean {
+  return detectDependenciesFromText(utterance, hazardId).some((item) => item.kind === kind);
 }
 
-export function detectDependenciesFromText(utterance: string): PlanDependency[] {
+export function detectDependenciesFromText(
+  utterance: string,
+  hazardId: PlanHazardId = "hurricane",
+): PlanDependency[] {
   const found: PlanDependency[] = [];
   const commMethods = detectCommMethods(utterance);
   if (commMethods.length > 0) {
@@ -113,7 +129,20 @@ export function detectDependenciesFromText(utterance: string): PlanDependency[] 
       evidenceQuote: elevatorQuote,
     });
   }
-  return found;
+  const shelter = detectShelterAccess(utterance);
+  if (shelter) found.push(shelter);
+  const alarm = detectAlarmPerception(utterance);
+  if (alarm) found.push(alarm);
+  const exit = firstPositiveMatch(utterance, EXIT_TERMS, "blocked-exit");
+  if (exit) {
+    found.push({
+      kind: "blocked-exit",
+      label: `Named planned exit (${clipLabel(exit)})`,
+      evidenceQuote: exit,
+    });
+  }
+  const allowed = new Set(getHazardConfig(hazardId).kinds);
+  return found.filter((item) => allowed.has(item.kind));
 }
 
 export function detectNotPlanned(utterance: string): PlanDependency[] {
@@ -137,14 +166,22 @@ export function detectNotPlanned(utterance: string): PlanDependency[] {
   return notes;
 }
 
-export function detectAmbiguousKinds(utterance: string): ComplicationKind[] {
+export function detectAmbiguousKinds(
+  utterance: string,
+  hazardId: PlanHazardId = "hurricane",
+): ComplicationKind[] {
   const kinds: ComplicationKind[] = [];
   if (hasHedgedMatch(utterance, COMMUNICATION_METHODS.flatMap((method) => method.terms), "communication")) {
     kinds.push("communication");
   }
   if (hasHedgedMatch(utterance, SUPPORT_TERMS, "support")) kinds.push("support");
   if (hasHedgedMatch(utterance, ELEVATOR_TERMS, "elevator")) kinds.push("elevator");
-  return kinds;
+  if (hasHedgedMatch(utterance, EXIT_TERMS, "blocked-exit")) kinds.push("blocked-exit");
+  if (hasHedgedMatch(utterance, SHELTER_TERMS, "shelter-access") && !ACCESS_UNRESOLVED.test(utterance)) {
+    kinds.push("shelter-access");
+  }
+  const allowed = new Set(getHazardConfig(hazardId).kinds);
+  return kinds.filter((kind) => allowed.has(kind));
 }
 
 export function groundedSummary(summary: string, utterance: string): string {
@@ -162,7 +199,38 @@ export function groundedSummary(summary: string, utterance: string): string {
 export function labelForKind(kind: ComplicationKind, evidenceQuote: string): string {
   if (kind === "communication") return `Named communication method (${clipLabel(evidenceQuote)})`;
   if (kind === "support") return `Named support contact (${clipLabel(evidenceQuote)})`;
+  if (kind === "shelter-access") return `Unresolved shelter access (${clipLabel(evidenceQuote)})`;
+  if (kind === "alarm-perception") return `Alarm signal may not be perceived (${clipLabel(evidenceQuote)})`;
+  if (kind === "blocked-exit") return `Named planned exit (${clipLabel(evidenceQuote)})`;
   return `Mentioned elevator (${clipLabel(evidenceQuote)})`;
+}
+
+function detectShelterAccess(utterance: string): PlanDependency | null {
+  if (!ACCESS_UNRESOLVED.test(utterance)) return null;
+  for (const match of collectMatches(utterance, SHELTER_TERMS)) {
+    return {
+      kind: "shelter-access",
+      label: `Named shelter with unresolved access (${clipLabel(match.snippet)})`,
+      evidenceQuote: match.snippet,
+    };
+  }
+  return null;
+}
+
+function detectAlarmPerception(utterance: string): PlanDependency | null {
+  if (!PERCEPTION_LIMIT.test(utterance)) return null;
+  for (const match of collectMatches(utterance, ALARM_TERMS)) {
+    if (PREFIX_NEGATION.test(match.before) && !PERCEPTION_LIMIT.test(match.sentence)) continue;
+    if (/\b(do not|don't|does not|doesn't|did not|didn't|haven'?t|have not)\s+(have|use)\b/i.test(match.before)) {
+      continue;
+    }
+    return {
+      kind: "alarm-perception",
+      label: `Alarm signal the user said they may not perceive (${clipLabel(match.snippet)})`,
+      evidenceQuote: match.snippet,
+    };
+  }
+  return null;
 }
 
 function firstPositiveMatch(utterance: string, terms: string[], kind: ComplicationKind): string | null {
@@ -225,10 +293,16 @@ function collectMatches(utterance: string, terms: string[]): TermMatch[] {
 }
 
 function isNegatedMatch(match: TermMatch, kind: ComplicationKind): boolean {
-  if (PREFIX_NEGATION.test(match.before)) return true;
   if (kind === "support" && SUPPORT_FAILURE_AFTER.test(match.after)) return true;
   if (kind === "support" && SUPPORT_FAILURE_AFTER.test(match.sentence)) return true;
-  return false;
+  const nearby = lastWords(match.before, 10);
+  const withoutPerception = nearby.replace(PERCEPTION_LIMIT, " ");
+  return PREFIX_NEGATION.test(withoutPerception);
+}
+
+function lastWords(text: string, count: number): string {
+  const words = text.trim().split(/\s+/);
+  return words.slice(-count).join(" ");
 }
 
 function sentenceBounds(text: string, index: number): { start: number; end: number } {

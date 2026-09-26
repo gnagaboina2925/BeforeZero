@@ -35,7 +35,9 @@ export interface ComplicationCopy {
   choices: PlanChoice[];
 }
 
-export const COMPLICATIONS: Record<ComplicationKind, ComplicationCopy> = {
+export type HurricaneComplicationKind = "communication" | "support" | "elevator";
+
+export const COMPLICATIONS: Record<HurricaneComplicationKind, ComplicationCopy> = {
   communication: {
     kind: "communication",
     title: "Practice moment: the named communication method is unavailable",
@@ -178,6 +180,9 @@ export const REHEARSAL_CHOICE_LABELS: Record<ComplicationKind, string> = {
   communication: "Communication method unavailable",
   support: "The planned support person cannot be reached",
   elevator: "A mentioned elevator is unavailable",
+  "shelter-access": "Unresolved access to the intended shelter",
+  "alarm-perception": "An alarm signal that may not be perceived",
+  "blocked-exit": "A planned exit is blocked",
 };
 
 export const STEP_FREE_NOTE =

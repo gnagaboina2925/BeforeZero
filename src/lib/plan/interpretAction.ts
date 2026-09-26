@@ -34,22 +34,22 @@ export async function interpretPlanUtterance(
       jsonParsed: false,
       providerCodeToken: null,
     });
-    return fallbackPlanInterpretation(parsed.utterance);
+    return fallbackPlanInterpretation(parsed.utterance, parsed.hazardId);
   }
-  const prompt = buildPlanInterpretationPrompt(parsed.utterance);
+  const prompt = buildPlanInterpretationPrompt(parsed.utterance, parsed.hazardId);
   try {
     const raw = await (deps.complete ?? completeStructuredJson)({
       apiKey: deps.apiKey,
       model: deps.model ?? getConfiguredModel(),
       instructions: prompt.instructions,
       userContent: prompt.userContent,
-      schema: planInterpretationSchema(),
+      schema: planInterpretationSchema(parsed.hazardId),
       maxCompletionTokens: 800,
     });
-    return sanitizePlanInterpretation(raw, parsed.utterance, parsed.round);
+    return sanitizePlanInterpretation(raw, parsed.utterance, parsed.round, parsed.hazardId);
   } catch (error) {
     if (error instanceof ProviderRequestError) {
-      return fallbackPlanInterpretation(parsed.utterance);
+      return fallbackPlanInterpretation(parsed.utterance, parsed.hazardId);
     }
     throw error;
   }

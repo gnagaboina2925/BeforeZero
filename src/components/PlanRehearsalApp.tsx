@@ -4,27 +4,25 @@ import { useAccessPreferences } from "@/components/AccessProvider";
 import { LessonStage } from "@/components/LessonStage";
 import { SceneListen } from "@/components/SceneListen";
 import { SpeakAnswer } from "@/components/SpeakAnswer";
-import { LESSON_SOURCES } from "@/lib/lesson/sources";
-import { beatById } from "@/lib/lesson/catalog";
+import { getLesson } from "@/lib/lesson/lessons";
 import type { LessonMediaManifest } from "@/lib/lesson/media";
 import hurricaneManifest from "@/lib/lesson/media-manifest.json";
+import tornadoManifest from "@/lib/lesson/tornado-media-manifest.json";
+import homeFireManifest from "@/lib/lesson/home-fire-media-manifest.json";
+import { LESSON_SOURCES } from "@/lib/lesson/sources";
 import {
-  COMPLICATIONS,
   DEFAULT_PLAN_PREFS,
-  FALLBACK_DEPENDENCY_CHOICES,
-  PLAN_EXAMPLE,
-  PLAN_PROMPT,
-  REHEARSAL_CHOICE_LABELS,
   REHEARSAL_CHOICE_PROMPT,
-  STEP_FREE_NOTE,
   SUPPORT_PERSON_NOTE,
 } from "@/lib/plan/catalog";
 import { detectDependenciesFromText } from "@/lib/plan/detect";
 import { evaluateRevisedPlan } from "@/lib/plan/evaluate";
+import { getHazardConfig } from "@/lib/plan/hazards";
 import { exampleComplication, rehearsalKinds, selectSupportedComplication } from "@/lib/plan/select";
 import type {
   ComplicationKind,
   ConfirmedPlan,
+  PlanHazardId,
   PlanInterpretation,
   PlanPreferenceFlags,
   PlanStep,
@@ -34,8 +32,6 @@ import type {
 import { MAX_TYPED_ANSWER_LENGTH, type InterpretError } from "@/lib/types";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-
-const manifest = hurricaneManifest as LessonMediaManifest;
 
 function subscribeReducedMotion(onChange: () => void) {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -47,7 +43,16 @@ function readReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function PlanRehearsalApp() {
+export function PlanRehearsalApp({ hazardId }: { hazardId: PlanHazardId }) {
+  const hazard = getHazardConfig(hazardId);
+  const lesson = getLesson(hazard.lessonId);
+  const manifest = (
+    hazardId === "tornado"
+      ? tornadoManifest
+      : hazardId === "home-fire"
+        ? homeFireManifest
+        : hurricaneManifest
+  ) as LessonMediaManifest;
   const { prefs: accessPrefs, setPrefs: setAccessPrefs } = useAccessPreferences();
   const [step, setStep] = useState<PlanStep>("prefs");
   const [planPrefs, setPlanPrefs] = useState<PlanPreferenceFlags>({
@@ -84,9 +89,9 @@ export function PlanRehearsalApp() {
     pauseMedia.current();
   }, [step]);
 
-  const copy = complication ? COMPLICATIONS[complication.kind] : null;
+  const copy = complication ? (hazard.complications[complication.kind] ?? null) : null;
   const media = copy ? manifest.beats[copy.mediaBeatId] : undefined;
-  const beat = copy ? beatById(copy.mediaBeatId) : undefined;
+  const beat = copy ? lesson.beatById(copy.mediaBeatId) : undefined;
   const whatToDo = copy ? (planPrefs.plainLanguage ? copy.whatToDoPlain : copy.whatToDo) : "";
 
   function applyPrefsAndContinue() {
@@ -110,16 +115,16 @@ export function PlanRehearsalApp() {
       const response = await fetch("/api/plan/interpret", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ utterance: text, round: nextRound }),
+        body: JSON.stringify({ utterance: text, round: nextRound, hazard: hazardId }),
       });
       const payload = (await response.json()) as PlanInterpretation | { error?: InterpretError };
       if (generation !== interpretGen.current) return;
       if (!response.ok || !("dependencies" in payload)) {
-        const fallbackKinds = detectDependenciesFromText(text).map((item) => item.kind);
+        const fallbackKinds = detectDependenciesFromText(text, hazardId).map((item) => item.kind);
         setInterpretation({
           summary: `You reported: ${text.slice(0, 220)}`,
           observations: [],
-          dependencies: detectDependenciesFromText(text),
+          dependencies: detectDependenciesFromText(text, hazardId),
           gaps: [],
           clarification: null,
           usedFallback: true,
@@ -143,7 +148,7 @@ export function PlanRehearsalApp() {
       setStep("confirm");
     } catch {
       if (generation !== interpretGen.current) return;
-      const fallback = detectDependenciesFromText(text);
+      const fallback = detectDependenciesFromText(text, hazardId);
       setInterpretation({
         summary: `You reported: ${text.slice(0, 220)}`,
         observations: [],
@@ -189,8 +194,8 @@ export function PlanRehearsalApp() {
       usedExample,
     };
     setConfirmed(nextConfirmed);
-    const kinds = rehearsalKinds(dependencies);
-    const selected = selectSupportedComplication(dependencies, { usedExample, chosenKind });
+    const kinds = rehearsalKinds(dependencies, hazard.kinds);
+    const selected = selectSupportedComplication(dependencies, { usedExample, chosenKind, hazardId });
     if (kinds.length > 1) {
       setOfferExample(false);
       setComplication(null);
@@ -210,7 +215,7 @@ export function PlanRehearsalApp() {
 
   function continueWithChosenKind() {
     if (!confirmed || !chosenKind) return;
-    const selected = selectSupportedComplication(confirmed.dependencies, { usedExample, chosenKind });
+    const selected = selectSupportedComplication(confirmed.dependencies, { usedExample, chosenKind, hazardId });
     if (!selected) {
       setOfferExample(true);
       return;
@@ -222,17 +227,17 @@ export function PlanRehearsalApp() {
 
   function startExampleScenario() {
     setUsedExample(true);
-    setPlanText(PLAN_EXAMPLE.text);
-    const dependencies = detectDependenciesFromText(PLAN_EXAMPLE.text);
+    setPlanText(hazard.example.text);
+    const dependencies = detectDependenciesFromText(hazard.example.text, hazardId);
     setConfirmed({
-      reportedText: PLAN_EXAMPLE.text,
-      summary: PLAN_EXAMPLE.text,
+      reportedText: hazard.example.text,
+      summary: hazard.example.text,
       observations: [],
       dependencies,
       gaps: [],
       usedExample: true,
     });
-    setComplication(exampleComplication());
+    setComplication(exampleComplication(hazardId));
     setOfferExample(false);
     setStep("teach");
   }
@@ -244,6 +249,7 @@ export function PlanRehearsalApp() {
       originalText: confirmed.reportedText,
       revisedText,
       selectedChoiceIds,
+      hazardId,
     });
     setReview(next);
     setStep(next.otherDependencyNote ? "gap-notice" : "card");
@@ -287,13 +293,11 @@ export function PlanRehearsalApp() {
 
   return (
     <section className="practice-landing" aria-labelledby="plan-rehearsal-heading">
-      <p className="kicker">Hurricane preparation rehearsal</p>
+      <p className="kicker">{hazard.kicker}</p>
       <h1 id="plan-rehearsal-heading" className="practice-heading">
-        Rehearse my plan
+        {hazard.heading}
       </h1>
-      <p className="practice-lede">
-        Explore dependencies in a preparation plan. This is not live emergency advice and not a verified assessment.
-      </p>
+      <p className="practice-lede">{hazard.lede}</p>
 
       {step === "prefs" ? (
         <div className="sim-card">
@@ -337,8 +341,8 @@ export function PlanRehearsalApp() {
             <button type="button" className="btn-secondary" onClick={() => setStep("describe")}>
               Skip
             </button>
-            <Link className="btn-ghost" href="/practice/hurricane">
-              Back to hurricane lesson
+            <Link className="btn-ghost" href={hazard.backHref}>
+              {hazard.backLabel}
             </Link>
           </div>
         </div>
@@ -347,22 +351,26 @@ export function PlanRehearsalApp() {
       {step === "describe" ? (
         <div className="sim-card">
           <h2 className="section-heading">Describe a plan</h2>
-          <p className="result-body">{PLAN_PROMPT}</p>
+          <p className="result-body">{hazard.prompt}</p>
           {planPrefs.supportPerson ? <p className="result-note">{SUPPORT_PERSON_NOTE}</p> : null}
-          {planPrefs.stepFree ? <p className="result-note">{STEP_FREE_NOTE}</p> : null}
+          {planPrefs.stepFree ? <p className="result-note">{hazard.stepFreeNote}</p> : null}
           <p className="result-note">Do not include names, addresses, or medical details. You can use a labeled example instead.</p>
+          <p className="result-note">{hazard.settingNote}</p>
           <div className="example-card">
-            <p className="grok-kicker">{PLAN_EXAMPLE.label}</p>
-            <p className="result-body">{PLAN_EXAMPLE.text}</p>
+            <p className="grok-kicker">{hazard.example.label}</p>
+            <p className="result-body">{hazard.example.text}</p>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => {
-                setPlanText(PLAN_EXAMPLE.text);
+                setPlanText(hazard.example.text);
                 setUsedExample(true);
               }}
             >
               Use this example
+            </button>
+            <button type="button" className="btn-secondary" onClick={startExampleScenario}>
+              Rehearse this labeled example
             </button>
           </div>
           <label className="typed-label" htmlFor="plan-text">
@@ -376,7 +384,7 @@ export function PlanRehearsalApp() {
               maxLength={MAX_TYPED_ANSWER_LENGTH}
               rows={5}
               onChange={(event) => {
-                setUsedExample(event.target.value === PLAN_EXAMPLE.text);
+                setUsedExample(event.target.value === hazard.example.text);
                 setPlanText(event.target.value);
               }}
               disabled={checking}
@@ -450,7 +458,7 @@ export function PlanRehearsalApp() {
           </ul>
           <fieldset className="a11y-fieldset">
             <legend>Dependencies from your words</legend>
-            {FALLBACK_DEPENDENCY_CHOICES.map((choice) => {
+            {hazard.dependencyChoices.map((choice) => {
               const detected = interpretation.dependencies.some((item) => item.kind === choice.id);
               const unclear = interpretation.ambiguousKinds.includes(choice.id);
               const enabled = detected || unclear || selectedKinds.includes(choice.id);
@@ -560,7 +568,7 @@ export function PlanRehearsalApp() {
           <p className="result-note">This run explores one complication. Choose the part to rehearse now.</p>
           <fieldset className="a11y-fieldset">
             <legend className="sr-only">{REHEARSAL_CHOICE_PROMPT}</legend>
-            {rehearsalKinds(confirmed.dependencies).map((kind) => (
+            {rehearsalKinds(confirmed.dependencies, hazard.kinds).map((kind) => (
               <label key={kind} className="check-row">
                 <input
                   type="radio"
@@ -568,7 +576,7 @@ export function PlanRehearsalApp() {
                   checked={chosenKind === kind}
                   onChange={() => setChosenKind(kind)}
                 />
-                <span>{REHEARSAL_CHOICE_LABELS[kind]}</span>
+                <span>{hazard.choiceLabels[kind]}</span>
               </label>
             ))}
           </fieldset>
@@ -605,12 +613,12 @@ export function PlanRehearsalApp() {
           />
           <h3 className="section-heading">What to do</h3>
           <p className="result-body">{whatToDo}</p>
-          {planPrefs.stepFree ? <p className="result-note">{STEP_FREE_NOTE}</p> : null}
+          {planPrefs.stepFree ? <p className="result-note">{hazard.stepFreeNote}</p> : null}
           <h3 className="section-heading">Why it matters</h3>
           <p className="result-body">{copy.whyItMatters}</p>
           <p className="result-note">{copy.whatToAvoid}</p>
           {planPrefs.spokenGuidance || accessPrefs.narration ? (
-            <SceneListen cacheKey={`plan-${copy.kind}`} narration={copy.narration} muted={false} />
+            <SceneListen cacheKey={`plan-${hazardId}-${copy.kind}`} narration={copy.narration} muted={false} />
           ) : null}
           <ul className="resource-list">
             {copy.sourceIds.map((id) => (
@@ -695,7 +703,7 @@ export function PlanRehearsalApp() {
             {review.otherDependencyNote}
           </p>
           <p className="result-note">
-            This run still explores {REHEARSAL_CHOICE_LABELS[complication.kind].toLowerCase()}. You can edit the
+            This run still explores {hazard.choiceLabels[complication.kind].toLowerCase()}. You can edit the
             response or continue with that backup still unresolved.
           </p>
           <div className="action-row">
@@ -717,6 +725,7 @@ export function PlanRehearsalApp() {
               complication={complication}
               copyTitle={copy.title}
               review={review}
+              practiceMoment={hazard.choiceLabels[review.selectedKind] || copy.title}
             />
             <div className="action-row">
               <button type="button" className="btn-primary" onClick={() => window.print()}>
@@ -728,15 +737,22 @@ export function PlanRehearsalApp() {
               <button type="button" className="btn-ghost" onClick={resetAll}>
                 Reset
               </button>
-              <Link className="btn-ghost" href="/practice/hurricane">
-                Back to hurricane lesson
+              <Link className="btn-ghost" href={hazard.backHref}>
+                {hazard.backLabel}
               </Link>
             </div>
           </div>
           <section className="print-card print-only" aria-label="Preparation card">
             <p className="print-kicker">BeforeZero</p>
             <h1>Rehearse my plan</h1>
-            <PreparationCard confirmed={confirmed} complication={complication} copyTitle={copy.title} review={review} print />
+            <PreparationCard
+              confirmed={confirmed}
+              complication={complication}
+              copyTitle={copy.title}
+              review={review}
+              practiceMoment={hazard.choiceLabels[review.selectedKind] || copy.title}
+              print
+            />
           </section>
         </>
       ) : null}
@@ -766,22 +782,24 @@ function PreparationCard({
   complication,
   copyTitle,
   review,
+  practiceMoment,
   print = false,
 }: {
   confirmed: ConfirmedPlan;
   complication: SelectedComplication;
   copyTitle: string;
   review: RevisedPlanReview;
+  practiceMoment: string;
   print?: boolean;
 }) {
   const titleClass = print ? undefined : "section-heading";
   const bodyClass = print ? undefined : "result-body";
-  const practiceMoment = REHEARSAL_CHOICE_LABELS[review.selectedKind] || copyTitle;
+  const momentLabel = practiceMoment || copyTitle;
   return (
     <>
       <h2 className={titleClass}>Practice moment</h2>
       <p className={bodyClass}>
-        {practiceMoment}
+        {momentLabel}
         {complication.source === "example" ? " (labeled example scenario)" : ""}
       </p>
       <h2 className={titleClass}>What your response addressed</h2>

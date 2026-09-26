@@ -21,9 +21,9 @@ import {
   lessonReducer,
   overlayForState,
 } from "@/lib/lesson/player";
+import { rehearsePlanHref } from "@/lib/plan/hazards";
 import { MAX_TYPED_ANSWER_LENGTH, type InterpretError } from "@/lib/types";
-import { useRouter } from "next/navigation";
-import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
+import { useReducer, useRef, useState, useSyncExternalStore } from "react";
 
 function subscribeReducedMotion(onChange: () => void) {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -79,7 +79,6 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
   const [proposal, setProposal] = useState<LessonProposal | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
-  const chapterListRef = useRef<HTMLDetailsElement | null>(null);
   const pauseMedia = useRef<() => void>(() => undefined);
   const systemReduceMotion = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false);
   const motionReady = useSyncExternalStore(subscribeMotionReady, readMotionReady, () => false);
@@ -94,18 +93,6 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
   const feedback = beat ? state.feedback[beat.id] : undefined;
   const overlay = overlayForState(state);
   const narrationNote = userMediaNote(media?.narrationStatus);
-
-  useEffect(() => {
-    const details = chapterListRef.current;
-    if (!details) return;
-    const media = window.matchMedia("(min-width: 900px)");
-    const sync = () => {
-      details.open = media.matches;
-    };
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, [state.started]);
 
   async function interpret() {
     const text = utterance.trim();
@@ -170,9 +157,7 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
               >
                 Practice my decisions
               </button>
-              {lessonId === "hurricane-flood-1" ? (
-                <RehearsePlanEntryLink onNavigate={() => pauseMedia.current()} />
-              ) : null}
+              <RehearsePlanEntryLink lessonId={lessonId} onNavigate={() => pauseMedia.current()} />
             </div>
           </div>
           <figure className="practice-preview">
@@ -217,7 +202,7 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
   const overlayDescription = feedback ? `${feedback.recommended} ${beat.overlayDescription}` : beat.overlayDescription;
   const canAdvance = beat.kind !== "decision" || Boolean(feedback);
   const chapterList = (
-    <ol className="lesson-chapters">
+    <ol className="lesson-chapters" aria-label="Lesson chapters">
       {beats.map((item, index) => {
         const selected = index === state.beatIndex;
         return (
@@ -285,7 +270,7 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
           {conditionLabel(beat.condition) ? <p className="lesson-condition">{conditionLabel(beat.condition)}</p> : null}
           <p className="lesson-now-action">{beat.kind === "debrief" ? beat.whatToDo : beat.happening}</p>
           <h2 className="lesson-aside-label lesson-chapters-heading">Chapters</h2>
-          <details ref={chapterListRef} className="lesson-chapters-wrap">
+          <details className="lesson-chapters-wrap" open>
             <summary>Chapters</summary>
             {chapterList}
           </details>
@@ -439,9 +424,7 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
               >
                 Practice this lesson
               </button>
-              {lessonId === "hurricane-flood-1" ? (
-                <RehearsePlanEntryLink onNavigate={() => pauseMedia.current()} />
-              ) : null}
+              <RehearsePlanEntryLink lessonId={lessonId} onNavigate={() => pauseMedia.current()} />
               <button type="button" className="btn-secondary" onClick={() => window.print()}>
                 Print notes
               </button>
@@ -545,31 +528,27 @@ function DebriefContent({
   );
 }
 
-function RehearsePlanEntryLink({ onNavigate }: { onNavigate: () => void }) {
-  const router = useRouter();
-  const href = "/practice/hurricane/rehearse-plan";
-
-  function go(event?: { preventDefault: () => void }) {
-    event?.preventDefault();
-    onNavigate();
-    router.push(href);
-  }
+function RehearsePlanEntryLink({
+  lessonId,
+  onNavigate,
+}: {
+  lessonId: PlatformLessonId;
+  onNavigate: () => void;
+}) {
+  const href = rehearsePlanHref(lessonId);
 
   return (
     <a
       className="btn-secondary"
       href={href}
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
-          onNavigate();
-          return;
-        }
-        go(event);
+      onClick={() => {
+        onNavigate();
       }}
       onKeyDown={(event) => {
         if (event.key === " ") {
           event.preventDefault();
-          go();
+          onNavigate();
+          event.currentTarget.click();
         }
       }}
     >

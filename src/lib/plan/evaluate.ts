@@ -1,7 +1,7 @@
 import { LESSON_SOURCES } from "../lesson/sources.ts";
-import { COMPLICATIONS } from "./catalog.ts";
 import { detectCommMethods, detectOtherPlanningTasks } from "./detect.ts";
-import type { ComplicationKind, PlanChoice, RevisedPlanReview } from "./types.ts";
+import { complicationCopy } from "./hazards.ts";
+import type { ComplicationKind, PlanChoice, PlanHazardId, RevisedPlanReview } from "./types.ts";
 
 const CARRY_PATTERN = /\b(carry me|carries me|pick me up|lift me)\b/i;
 const INVENT_ROUTE_PATTERN = /\b(invent|make a new (path|route)|secret (path|route))\b/i;
@@ -12,13 +12,30 @@ export function evaluateRevisedPlan(args: {
   originalText: string;
   revisedText: string;
   selectedChoiceIds: string[];
+  hazardId?: PlanHazardId;
 }): RevisedPlanReview {
-  const copy = COMPLICATIONS[args.kind];
+  const hazardId = args.hazardId ?? "hurricane";
+  const copy = complicationCopy(hazardId, args.kind);
+  if (!copy) {
+    return {
+      revisedText: args.revisedText.trim(),
+      selectedChoiceIds: [],
+      selectedKind: args.kind,
+      remainingGaps: ["This rehearsal does not have an authored scene for that dependency."],
+      preparationTasks: [],
+      sourceExcerpts: [],
+      stillNeedsConfirming: ["This rehearsal does not prove preparedness.", "Follow local emergency managers for real instructions."],
+      warning: null,
+      otherDependencyNote: null,
+      addressedSummary: "No authored scene was available.",
+      otherPlanningTasks: detectOtherPlanningTasks(args.originalText),
+    };
+  }
   const allowed = new Set(copy.choices.map((choice) => choice.id));
   const selectedChoiceIds = args.selectedChoiceIds.filter((id) => allowed.has(id));
   const selected = copy.choices.filter((choice) => selectedChoiceIds.includes(choice.id));
   const warning = unsafeRevisionWarning(args.revisedText, selected);
-  const remainingGaps = remainingGapsFor(args, selected, warning);
+  const remainingGaps = remainingGapsFor({ ...args, hazardId }, selected, warning);
   const addressed = addressedKinds(args.revisedText);
   const otherDependencyNote = mismatchNote(args.kind, addressed);
   const otherPlanningTasks = detectOtherPlanningTasks(args.originalText);
@@ -52,7 +69,7 @@ function unsafeRevisionWarning(revisedText: string, selected: PlanChoice[]): str
 }
 
 function remainingGapsFor(
-  args: { kind: ComplicationKind; originalText: string; revisedText: string },
+  args: { kind: ComplicationKind; originalText: string; revisedText: string; hazardId: PlanHazardId },
   selected: PlanChoice[],
   warning: string | null,
 ): string[] {
@@ -67,13 +84,28 @@ function remainingGapsFor(
     }
   }
   if (args.kind === "support") {
-    if (!filled && !namesSecondSupport(args.originalText, args.revisedText)) {
+    if (!filled && !namesSecondSupport(args.originalText, args.revisedText) && !namesLeaveAndCall(args.revisedText)) {
       gaps.push("A backup person or support-network contact is still to confirm.");
     }
   }
   if (args.kind === "elevator") {
     if (!filled && !namesAccessArrangement(args.revisedText)) {
       gaps.push("Accessible transportation or other help that does not depend on the elevator is still to confirm.");
+    }
+  }
+  if (args.kind === "shelter-access") {
+    if (!filled && !namesBeforehandAccess(args.revisedText)) {
+      gaps.push("How you would reach the named shelter before severe weather is still to confirm.");
+    }
+  }
+  if (args.kind === "alarm-perception") {
+    if (!filled && !namesAccessibleAlarm(args.revisedText)) {
+      gaps.push("A warning method you said you can perceive is still to confirm.");
+    }
+  }
+  if (args.kind === "blocked-exit") {
+    if (!filled && !namesSecondExitOrStay(args.revisedText)) {
+      gaps.push("A second planned way out, or sourced stay-in-place steps if you cannot leave, is still to confirm.");
     }
   }
   if (!args.revisedText.trim() && selected.length === 0) {
@@ -85,8 +117,13 @@ function remainingGapsFor(
 export function addressedKinds(text: string): ComplicationKind[] {
   const kinds: ComplicationKind[] = [];
   if (namesSecondAlertChannel(text) || detectCommMethods(text).length > 0) kinds.push("communication");
-  if (namesSupportTask(text)) kinds.push("support");
+  if (namesSupportTask(text) || namesLeaveAndCall(text)) kinds.push("support");
   if (/\b(elevator|lift|accessible transport|paratransit)\b/i.test(text)) kinds.push("elevator");
+  if (namesBeforehandAccess(text) || /\b(blankets and pillows|interior room|basement)\b/i.test(text)) {
+    kinds.push("shelter-access");
+  }
+  if (namesAccessibleAlarm(text)) kinds.push("alarm-perception");
+  if (namesSecondExitOrStay(text)) kinds.push("blocked-exit");
   return kinds;
 }
 
@@ -126,11 +163,20 @@ function addressedSummaryFor(
   if (kind === "communication" && namesSecondAlertChannel(revisedText)) {
     return "A second official way to receive alerts";
   }
-  if (kind === "support" && namesSecondSupport("", revisedText)) {
+  if (kind === "support" && (namesSecondSupport("", revisedText) || namesLeaveAndCall(revisedText))) {
     return "A backup person or support-network contact";
   }
   if (kind === "elevator" && namesAccessArrangement(revisedText)) {
     return "An access arrangement that does not depend on the elevator";
+  }
+  if (kind === "shelter-access" && namesBeforehandAccess(revisedText)) {
+    return "A beforehand arrangement to reach the named shelter";
+  }
+  if (kind === "alarm-perception" && namesAccessibleAlarm(revisedText)) {
+    return "A warning method you said you can perceive";
+  }
+  if (kind === "blocked-exit" && namesSecondExitOrStay(revisedText)) {
+    return "A sourced fire-escape action for a blocked exit";
   }
   if (!revisedText.trim() && selected.length === 0) return "No revised response was recorded yet.";
   return "The words in your revised response";
@@ -155,6 +201,22 @@ function namesAccessArrangement(text: string): boolean {
   return /\b(accessible transport|paratransit|neighbor|building (manager|plan)|local (transit|emergency)|registry)\b/i.test(
     text,
   );
+}
+
+function namesBeforehandAccess(text: string): boolean {
+  return /\b(before (severe )?weather|arrange how|extra help|how I would (reach|get))\b/i.test(text);
+}
+
+function namesAccessibleAlarm(text: string): boolean {
+  return /\b(strobe|vibrat|flashing light|interconnected|another warning|can perceive)\b/i.test(text);
+}
+
+function namesSecondExitOrStay(text: string): boolean {
+  return /\b(second way|two ways|feel the door|9-1-1|911|cannot get out|signal for help)\b/i.test(text);
+}
+
+function namesLeaveAndCall(text: string): boolean {
+  return /\b(leave and call|call 9-1-1|call 911)\b/i.test(text);
 }
 
 function confirmingList(remainingGaps: string[]): string[] {

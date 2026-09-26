@@ -1,10 +1,20 @@
 export const PLAN_STEPS = ["prefs", "describe", "confirm", "choose", "teach", "revise", "gap-notice", "card"] as const;
 export type PlanStep = (typeof PLAN_STEPS)[number];
 
-export const COMPLICATION_KINDS = ["communication", "support", "elevator"] as const;
+export const PLAN_HAZARD_IDS = ["hurricane", "tornado", "home-fire"] as const;
+export type PlanHazardId = (typeof PLAN_HAZARD_IDS)[number];
+
+export const COMPLICATION_KINDS = [
+  "communication",
+  "support",
+  "elevator",
+  "shelter-access",
+  "alarm-perception",
+  "blocked-exit",
+] as const;
 export type ComplicationKind = (typeof COMPLICATION_KINDS)[number];
 
-export const OBSERVATION_TOPICS = ["alerts", "support", "access"] as const;
+export const OBSERVATION_TOPICS = ["alerts", "support", "access", "alarm", "exit"] as const;
 export type ObservationTopic = (typeof OBSERVATION_TOPICS)[number];
 
 export const MENTION_STATUSES = ["mentioned", "not-mentioned", "not-planned", "ambiguous"] as const;
