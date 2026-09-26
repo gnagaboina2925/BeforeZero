@@ -163,6 +163,7 @@ describe("evidence-supported complication selection", () => {
     );
     const access = fallback.observations.find((item) => item.topic === "access");
     assert.equal(access?.status, "mentioned");
+    assert.equal(access?.note, "You named a shelter and said access to it is still unresolved.");
     assert.equal(
       fallback.dependencies.find((item) => item.kind === "shelter-access")?.evidenceQuote,
       "My shelter is the basement, but I haven’t arranged how to reach it.",
@@ -253,8 +254,68 @@ describe("evidence-supported complication selection", () => {
       selectedChoiceIds: ["during-cover-only"],
       hazardId: "tornado",
     });
-    assert.ok(review.remainingGaps.some((item) => /before severe weather/i.test(item)));
+    assert.equal(review.addressedSummary, "You identified that shelter access still needs arranging.");
+    assert.ok(review.remainingGaps.includes("How you will reach your intended shelter remains unresolved."));
     assert.equal(review.warning, null);
+  });
+
+  it("does not treat outstanding, future, or uncertain shelter wording as an arrangement", () => {
+    const original = TORNADO_PLAN_EXAMPLE.text;
+    const unresolved = [
+      "I still need to arrange how to reach my shelter.",
+      "I haven’t arranged assistance.",
+      "I will ask someone tomorrow.",
+      "Maybe my neighbor could help.",
+    ];
+    for (const revisedText of unresolved) {
+      const review = evaluateRevisedPlan({
+        kind: "shelter-access",
+        originalText: original,
+        revisedText,
+        selectedChoiceIds: [],
+        hazardId: "tornado",
+      });
+      assert.equal(review.addressedSummary, "You identified that shelter access still needs arranging.");
+      assert.ok(review.remainingGaps.includes("How you will reach your intended shelter remains unresolved."));
+      assert.match(review.stillNeedsConfirming.join(" "), /does not prove preparedness/i);
+    }
+    const reported = evaluateRevisedPlan({
+      kind: "shelter-access",
+      originalText: original,
+      revisedText: "I have arranged how to reach the basement.",
+      selectedChoiceIds: [],
+      hazardId: "tornado",
+    });
+    assert.equal(reported.addressedSummary, "A beforehand arrangement to reach the named shelter");
+    assert.equal(reported.remainingGaps.includes("How you will reach your intended shelter remains unresolved."), false);
+    assert.match(reported.stillNeedsConfirming.join(" "), /does not prove preparedness/i);
+  });
+
+  it("keeps outstanding or uncertain wording from filling hurricane and home-fire backups", () => {
+    const elevator = evaluateRevisedPlan({
+      kind: "elevator",
+      originalText: "If the elevator is out I am not sure what I would do.",
+      revisedText: "Maybe my neighbor could help.",
+      selectedChoiceIds: [],
+      hazardId: "hurricane",
+    });
+    assert.ok(elevator.remainingGaps.some((item) => /elevator/i.test(item)));
+    const alarm = evaluateRevisedPlan({
+      kind: "alarm-perception",
+      originalText: "I have a smoke alarm I may not hear.",
+      revisedText: "I still need to arrange a strobe.",
+      selectedChoiceIds: [],
+      hazardId: "home-fire",
+    });
+    assert.ok(alarm.remainingGaps.some((item) => /perceive/i.test(item)));
+    const exit = evaluateRevisedPlan({
+      kind: "blocked-exit",
+      originalText: "My planned exit is the front door.",
+      revisedText: "I will ask someone tomorrow.",
+      selectedChoiceIds: [],
+      hazardId: "home-fire",
+    });
+    assert.ok(exit.remainingGaps.some((item) => /second planned way/i.test(item)));
   });
 
   it("falls back when the tornado interpret provider fails", async () => {

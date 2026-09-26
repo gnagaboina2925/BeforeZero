@@ -5,7 +5,13 @@ import type { ComplicationKind, PlanChoice, PlanHazardId, RevisedPlanReview } fr
 
 const CARRY_PATTERN = /\b(carry me|carries me|pick me up|lift me)\b/i;
 const INVENT_ROUTE_PATTERN = /\b(invent|make a new (path|route)|secret (path|route))\b/i;
-const STILL_UNRESOLVED = /\b(still need|need to arrange|haven'?t|have not|not yet)\b/i;
+const OUTSTANDING_TASK =
+  /\b(still need|need to( arrange)?|haven't|have not|has not|hasn't|not yet|still have to|have to arrange|did not arrange)\b/i;
+const FUTURE_INTENTION =
+  /\b(will (ask|arrange|call|get|find|figure)|going to (ask|arrange|call)|tomorrow|later today|next (week|time)|plan to (ask|arrange|get)|would (ask|arrange))\b/i;
+const UNCERTAINTY = /\b(maybe|might|possibly|not sure|unsure|could help|i think|kind of|or something)\b/i;
+const SHELTER_ACCESS_UNRESOLVED = "How you will reach your intended shelter remains unresolved.";
+const SHELTER_ACCESS_OUTSTANDING = "You identified that shelter access still needs arranging.";
 
 export function evaluateRevisedPlan(args: {
   kind: ComplicationKind;
@@ -95,7 +101,7 @@ function remainingGapsFor(
   }
   if (args.kind === "shelter-access") {
     if (!filled && !namesBeforehandAccess(args.revisedText)) {
-      gaps.push("How you would reach the named shelter before severe weather is still to confirm.");
+      gaps.push(SHELTER_ACCESS_UNRESOLVED);
     }
   }
   if (args.kind === "alarm-perception") {
@@ -119,7 +125,7 @@ export function addressedKinds(text: string): ComplicationKind[] {
   if (namesSecondAlertChannel(text) || detectCommMethods(text).length > 0) kinds.push("communication");
   if (namesSupportTask(text) || namesLeaveAndCall(text)) kinds.push("support");
   if (/\b(elevator|lift|accessible transport|paratransit)\b/i.test(text)) kinds.push("elevator");
-  if (namesBeforehandAccess(text) || /\b(blankets and pillows|interior room|basement)\b/i.test(text)) {
+  if (namesBeforehandAccess(text) || identifiesOutstandingShelterAccess(text)) {
     kinds.push("shelter-access");
   }
   if (namesAccessibleAlarm(text)) kinds.push("alarm-perception");
@@ -169,8 +175,11 @@ function addressedSummaryFor(
   if (kind === "elevator" && namesAccessArrangement(revisedText)) {
     return "An access arrangement that does not depend on the elevator";
   }
-  if (kind === "shelter-access" && namesBeforehandAccess(revisedText)) {
-    return "A beforehand arrangement to reach the named shelter";
+  if (kind === "shelter-access") {
+    if (namesBeforehandAccess(revisedText)) {
+      return "A beforehand arrangement to reach the named shelter";
+    }
+    if (revisedText.trim()) return SHELTER_ACCESS_OUTSTANDING;
   }
   if (kind === "alarm-perception" && namesAccessibleAlarm(revisedText)) {
     return "A warning method you said you can perceive";
@@ -182,7 +191,13 @@ function addressedSummaryFor(
   return "The words in your revised response";
 }
 
+function revisionLeavesGapOpen(text: string): boolean {
+  const folded = foldTypographicMarks(text);
+  return OUTSTANDING_TASK.test(folded) || FUTURE_INTENTION.test(folded) || UNCERTAINTY.test(folded);
+}
+
 function namesSecondAlertChannel(text: string): boolean {
+  if (revisionLeavesGapOpen(text)) return false;
   return /\b(noaa|weather radio|wea|wireless|eas|emergency alert system|community alert|fema app|tv|television)\b/i.test(
     text,
   );
@@ -193,29 +208,43 @@ function namesSupportTask(text: string): boolean {
 }
 
 function namesSecondSupport(original: string, revised: string): boolean {
-  if (STILL_UNRESOLVED.test(foldTypographicMarks(revised))) return false;
+  if (revisionLeavesGapOpen(revised)) return false;
   return /\b(another|other|second|network|registry|list of|more than one)\b/i.test(revised) && revised.trim() !== original.trim();
 }
 
 function namesAccessArrangement(text: string): boolean {
+  if (revisionLeavesGapOpen(text)) return false;
   return /\b(accessible transport|paratransit|neighbor|building (manager|plan)|local (transit|emergency)|registry)\b/i.test(
     text,
   );
 }
 
 function namesBeforehandAccess(text: string): boolean {
-  return /\b(before (severe )?weather|arrange how|extra help|how I would (reach|get))\b/i.test(text);
+  if (revisionLeavesGapOpen(text)) return false;
+  const folded = foldTypographicMarks(text);
+  if (/\b(arrange|reach|shelter|basement|access)\b/i.test(folded) && !/\b(have|has|already)\s+arranged\b/i.test(folded)) {
+    return false;
+  }
+  return /\b((i|we) have arranged|already arranged|have arranged how|arranged extra help)\b/i.test(folded);
+}
+
+function identifiesOutstandingShelterAccess(text: string): boolean {
+  const folded = foldTypographicMarks(text);
+  return revisionLeavesGapOpen(folded) && /\b(shelter|reach|access|arrange|basement|assistance)\b/i.test(folded);
 }
 
 function namesAccessibleAlarm(text: string): boolean {
+  if (revisionLeavesGapOpen(text)) return false;
   return /\b(strobe|vibrat|flashing light|interconnected|another warning|can perceive)\b/i.test(text);
 }
 
 function namesSecondExitOrStay(text: string): boolean {
+  if (revisionLeavesGapOpen(text)) return false;
   return /\b(second way|two ways|feel the door|9-1-1|911|cannot get out|signal for help)\b/i.test(text);
 }
 
 function namesLeaveAndCall(text: string): boolean {
+  if (revisionLeavesGapOpen(text)) return false;
   return /\b(leave and call|call 9-1-1|call 911)\b/i.test(text);
 }
 

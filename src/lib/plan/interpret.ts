@@ -234,7 +234,10 @@ function fillObservations(
         topic,
         status: "mentioned" as const,
         evidenceQuote: match.evidenceQuote,
-        note: noteFor(topic, "mentioned", utterance),
+        note:
+          match.kind === "shelter-access"
+            ? "You named a shelter and said access to it is still unresolved."
+            : noteFor(topic, "mentioned", utterance),
       };
     }
     if (kind && ambiguousKinds.includes(kind)) {
