@@ -40,7 +40,7 @@ const HEDGE_PATTERN = /\b(might|maybe|not sure|unsure|possibly|i think|or someth
 const SUPPORT_FAILURE_AFTER =
   /\b(cannot|can't|can not|could not|couldn't|won't|will not|does not|doesn't|do not|don't|unable to|isn't able to|is not able to)\s+(help|assist|come|be there|make it|be available)\b/i;
 const PREFIX_NEGATION =
-  /\b(do not|don't|does not|doesn't|did not|didn't|cannot|can't|can not|will not|won't|never|no longer|without|not)\b/i;
+  /\b(do not|don't|does not|doesn't|did not|didn't|haven'?t|have not|cannot|can't|can not|will not|won't|never|no longer|without|not)\b/i;
 
 export function normalizePlanText(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
@@ -248,6 +248,23 @@ function sentenceBounds(text: string, index: number): { start: number; end: numb
   }
   while (start < end && text[start] === " ") start += 1;
   return { start, end };
+}
+
+export function detectOtherPlanningTasks(utterance: string): { kind: ComplicationKind; text: string }[] {
+  const tasks: { kind: ComplicationKind; text: string }[] = [];
+  const text = utterance.replace(/\s+/g, " ").trim();
+  if (!text) return tasks;
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  for (const sentence of sentences) {
+    if (
+      /\b(haven'?t|have not|not yet|still need to)\b/i.test(sentence) &&
+      /\b(another|other|second)\b/i.test(sentence) &&
+      /\b(support person|support network|backup person|contact)\b/i.test(sentence)
+    ) {
+      tasks.push({ kind: "support", text: sentence.replace(/[.!?]+$/, "").trim() });
+    }
+  }
+  return tasks;
 }
 
 function clipAround(text: string, index: number, termLength: number): string {

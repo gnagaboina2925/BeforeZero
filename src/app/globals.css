@@ -603,6 +603,25 @@ body {
   margin-top: 0.9rem;
 }
 
+.plan-card-details {
+  margin: 1rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(169, 180, 199, 0.16);
+  background: rgba(7, 16, 24, 0.28);
+}
+
+.plan-card-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--amber-300);
+}
+
+.plan-card-details .result-body,
+.plan-card-details ul {
+  margin-top: 0.75rem;
+}
+
 .print-only {
   display: none;
 }
@@ -1729,5 +1748,15 @@ html[data-contrast="high"] .app-shell {
     text-transform: uppercase;
     font-size: 10pt;
     margin: 0 0 0.5rem;
+  }
+
+  .plan-card-details {
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .plan-card-details summary {
+    display: none;
   }
 }

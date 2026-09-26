@@ -175,9 +175,9 @@ export const FALLBACK_DEPENDENCY_CHOICES: { id: ComplicationKind; label: string 
 export const REHEARSAL_CHOICE_PROMPT = "Which part would you like to rehearse?";
 
 export const REHEARSAL_CHOICE_LABELS: Record<ComplicationKind, string> = {
-  communication: "The named way to receive updates",
-  support: "The named support contact",
-  elevator: "The named elevator or access arrangement",
+  communication: "Communication method unavailable",
+  support: "The planned support person cannot be reached",
+  elevator: "A mentioned elevator is unavailable",
 };
 
 export const STEP_FREE_NOTE =

@@ -239,4 +239,44 @@ describe("revised plan evaluation", () => {
     }
     assert.ok(COMPLICATIONS.elevator.sourceIds.every((id) => id in LESSON_SOURCES));
   });
+
+  it("preserves a chosen communication complication when support is also in the plan", () => {
+    const original =
+      "My plan depends on my phone for updates and my neighbor for assistance. I haven't arranged another support person.";
+    const deps = detectDependenciesFromText(original);
+    assert.ok(deps.some((item) => item.kind === "communication"));
+    assert.ok(deps.some((item) => item.kind === "support"));
+    assert.equal(selectSupportedComplication(deps), null);
+    assert.equal(selectSupportedComplication(deps, { chosenKind: "communication" })?.kind, "communication");
+    assert.equal(selectSupportedComplication(deps, { chosenKind: "support" })?.kind, "support");
+    const review = evaluateRevisedPlan({
+      kind: "communication",
+      originalText: original,
+      revisedText: "I would also use a weather radio.",
+      selectedChoiceIds: ["second-alert-channel"],
+    });
+    assert.equal(review.selectedKind, "communication");
+    assert.equal(review.otherDependencyNote, null);
+  });
+
+  it("keeps a support-person task when the revision does not resolve the rehearsed communication backup", () => {
+    const original =
+      "My plan depends on my phone for updates and my neighbor for assistance. I haven't arranged another support person.";
+    const review = evaluateRevisedPlan({
+      kind: "communication",
+      originalText: original,
+      revisedText: "I still need to arrange another support person.",
+      selectedChoiceIds: [],
+    });
+    assert.equal(review.selectedKind, "communication");
+    assert.equal(
+      review.otherDependencyNote,
+      "You identified a support-person task. The communication backup explored in this rehearsal is still unresolved.",
+    );
+    assert.ok(review.remainingGaps.some((item) => /second official way/i.test(item)));
+    assert.equal(review.addressedSummary, "A support-person task");
+    assert.ok(review.otherPlanningTasks.some((item) => /another support person/i.test(item.text)));
+    assert.equal(review.otherPlanningTasks.every((item) => item.kind === "support"), true);
+    assert.ok(review.sourceExcerpts.every((item) => item.excerpt.length > 0));
+  });
 });

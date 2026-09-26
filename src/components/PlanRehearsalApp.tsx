@@ -239,14 +239,18 @@ export function PlanRehearsalApp() {
 
   function finishRevision() {
     if (!complication || !confirmed) return;
-    setReview(
-      evaluateRevisedPlan({
-        kind: complication.kind,
-        originalText: confirmed.reportedText,
-        revisedText,
-        selectedChoiceIds,
-      }),
-    );
+    const next = evaluateRevisedPlan({
+      kind: complication.kind,
+      originalText: confirmed.reportedText,
+      revisedText,
+      selectedChoiceIds,
+    });
+    setReview(next);
+    setStep(next.otherDependencyNote ? "gap-notice" : "card");
+  }
+
+  function continueWithUnresolvedGap() {
+    if (!review || !complication) return;
     setStep("card");
   }
 
@@ -684,6 +688,27 @@ export function PlanRehearsalApp() {
         </div>
       ) : null}
 
+      {step === "gap-notice" && review?.otherDependencyNote && copy && complication ? (
+        <div className="sim-card">
+          <h2 className="section-heading">This revision is about a different part of the plan</h2>
+          <p className="result-body" role="status">
+            {review.otherDependencyNote}
+          </p>
+          <p className="result-note">
+            This run still explores {REHEARSAL_CHOICE_LABELS[complication.kind].toLowerCase()}. You can edit the
+            response or continue with that backup still unresolved.
+          </p>
+          <div className="action-row">
+            <button type="button" className="btn-secondary" onClick={() => setStep("revise")}>
+              Edit the response
+            </button>
+            <button type="button" className="btn-primary" onClick={continueWithUnresolvedGap}>
+              Continue with this gap unresolved
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {step === "card" && confirmed && review && complication && copy ? (
         <>
           <div className="sim-card no-print">
@@ -751,36 +776,97 @@ function PreparationCard({
 }) {
   const titleClass = print ? undefined : "section-heading";
   const bodyClass = print ? undefined : "result-body";
+  const practiceMoment = REHEARSAL_CHOICE_LABELS[review.selectedKind] || copyTitle;
   return (
     <>
-      <h2 className={titleClass}>Your reported plan</h2>
-      <p className={bodyClass}>{confirmed.reportedText}</p>
-      <h2 className={titleClass}>The dependency explored</h2>
+      <h2 className={titleClass}>Practice moment</h2>
       <p className={bodyClass}>
-        {copyTitle}
+        {practiceMoment}
         {complication.source === "example" ? " (labeled example scenario)" : ""}
       </p>
-      <h2 className={titleClass}>Your revised response</h2>
-      <p className={bodyClass}>{review.revisedText || "(listed options only)"}</p>
+      <h2 className={titleClass}>What your response addressed</h2>
+      <p className={bodyClass}>{review.addressedSummary}</p>
+      {review.otherDependencyNote ? <p className={print ? undefined : "result-note"}>{review.otherDependencyNote}</p> : null}
       {review.warning ? <p className={print ? undefined : "result-note"}>{review.warning}</p> : null}
-      <h2 className={titleClass}>Arrangements still to confirm</h2>
+      <h2 className={titleClass}>Still to arrange</h2>
       <ul>
-        {review.stillNeedsConfirming.map((item) => (
-          <li key={item} className={bodyClass}>
-            {item}
-          </li>
-        ))}
+        {review.remainingGaps.length ? (
+          review.remainingGaps.map((item) => (
+            <li key={item} className={bodyClass}>
+              {item}
+            </li>
+          ))
+        ) : (
+          <li className={bodyClass}>No additional backup was recorded for this practice moment.</li>
+        )}
       </ul>
-      <h2 className={titleClass}>Source-backed preparation tasks</h2>
+      {review.otherPlanningTasks.length ? (
+        <>
+          <h2 className={titleClass}>Other planning tasks you mentioned</h2>
+          <ul>
+            {review.otherPlanningTasks.map((item) => (
+              <li key={item.text} className={bodyClass}>
+                {item.text} (not completed in this rehearsal)
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <h2 className={titleClass}>Short, source-backed next steps</h2>
       <ul>
         {review.preparationTasks.map((item) => (
           <li key={item.sourceId} className={bodyClass}>
-            {item.text} ({LESSON_SOURCES[item.sourceId as keyof typeof LESSON_SOURCES].title})
+            {item.text}
           </li>
         ))}
       </ul>
+      {print ? (
+        <>
+          <h2>Original and revised answers</h2>
+          <p>
+            <strong>Original: </strong>
+            {confirmed.reportedText}
+          </p>
+          <p>
+            <strong>Revised: </strong>
+            {review.revisedText || "(listed options only)"}
+          </p>
+          <h2>Source excerpts</h2>
+          <ul>
+            {review.sourceExcerpts.map((item) => (
+              <li key={item.sourceId}>
+                {item.title}: {item.excerpt}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <details className="plan-card-details">
+            <summary>Original and revised answers</summary>
+            <p className="result-body">
+              <strong>Original: </strong>
+              {confirmed.reportedText}
+            </p>
+            <p className="result-body">
+              <strong>Revised: </strong>
+              {review.revisedText || "(listed options only)"}
+            </p>
+          </details>
+          <details className="plan-card-details">
+            <summary>Full source excerpts</summary>
+            <ul>
+              {review.sourceExcerpts.map((item) => (
+                <li key={item.sourceId} className="result-body">
+                  {item.title}: {item.excerpt}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </>
+      )}
       <p className={print ? undefined : "result-note"}>
-        First and revised answers are both kept. A revised answer does not prove preparedness.
+        This rehearsal does not prove preparedness. Follow local emergency managers for real instructions.
       </p>
     </>
   );

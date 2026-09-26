@@ -1,4 +1,4 @@
-export const PLAN_STEPS = ["prefs", "describe", "confirm", "choose", "teach", "revise", "card"] as const;
+export const PLAN_STEPS = ["prefs", "describe", "confirm", "choose", "teach", "revise", "gap-notice", "card"] as const;
 export type PlanStep = (typeof PLAN_STEPS)[number];
 
 export const COMPLICATION_KINDS = ["communication", "support", "elevator"] as const;
@@ -61,11 +61,21 @@ export interface SelectedComplication {
   source: "plan" | "example";
 }
 
+export interface OtherPlanningTask {
+  kind: ComplicationKind;
+  text: string;
+}
+
 export interface RevisedPlanReview {
   revisedText: string;
   selectedChoiceIds: string[];
+  selectedKind: ComplicationKind;
   remainingGaps: string[];
   preparationTasks: { text: string; sourceId: string }[];
+  sourceExcerpts: { sourceId: string; title: string; excerpt: string }[];
   stillNeedsConfirming: string[];
   warning: string | null;
+  otherDependencyNote: string | null;
+  addressedSummary: string;
+  otherPlanningTasks: OtherPlanningTask[];
 }
