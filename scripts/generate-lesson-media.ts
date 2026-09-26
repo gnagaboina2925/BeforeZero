@@ -14,15 +14,23 @@ import {
   VIDEO_MODEL,
   VIDEO_RESOLUTION,
   VIDEO_STATUS_URL,
+  HOME_FIRE_CLIP_PROMPTS,
+  HOME_FIRE_IMAGINE_CLIP_IDS,
+  emptyHomeFireMediaManifest,
   emptyLessonMediaManifest,
   emptyTornadoMediaManifest,
+  homeFireStillForScene,
   narrationClips,
   narrationFingerprint,
+  svgDocument,
   vttFromNarration,
+  xmlSafeText,
+  type HomeFireImagineClipId,
   type ImagineClipId,
   type TornadoImagineClipId,
 } from "../src/lib/lesson/media.ts";
 import type { HurricaneSceneId } from "../src/lib/lesson/catalog.ts";
+import { HOME_FIRE_BEATS, HOME_FIRE_LESSON_ID } from "../src/lib/lesson/home-fire.ts";
 import { TORNADO_BEATS, TORNADO_LESSON_ID } from "../src/lib/lesson/tornado.ts";
 import { TTS_URL, ttsVoice } from "../src/lib/voice.ts";
 
@@ -45,6 +53,15 @@ const TORNADO_CAPTION_DIR = path.join(TORNADO_DIR, "captions");
 const TORNADO_JOBS_PATH = path.join(TORNADO_DIR, "jobs.json");
 const TORNADO_HASH_PATH = path.join(TORNADO_DIR, "narration-hashes.json");
 const TORNADO_DIAGRAM_BEATS = new Set(["tornado-demo-shelter", "tornado-warning-decision"]);
+const HOME_FIRE_DIR = path.join(LESSON_DIR, "home-fire");
+const HOME_FIRE_SOURCE_DIR = path.join(HOME_FIRE_DIR, "source");
+const HOME_FIRE_AUDIO_DIR = path.join(HOME_FIRE_DIR, "audio");
+const HOME_FIRE_MUX_DIR = path.join(HOME_FIRE_DIR, "muxed");
+const HOME_FIRE_CAPTION_DIR = path.join(HOME_FIRE_DIR, "captions");
+const HOME_FIRE_STILL_DIR = path.join(HOME_FIRE_DIR, "stills");
+const HOME_FIRE_JOBS_PATH = path.join(HOME_FIRE_DIR, "jobs.json");
+const HOME_FIRE_HASH_PATH = path.join(HOME_FIRE_DIR, "narration-hashes.json");
+const HOME_FIRE_DIAGRAM_BEATS = new Set(["fire-demo-plan", "fire-alarm-decision", "fire-blocked-decision"]);
 const FFMPEG = "/opt/homebrew/bin/ffmpeg";
 const FFPROBE = "/opt/homebrew/bin/ffprobe";
 
@@ -57,6 +74,7 @@ interface JobRecord {
 
 type JobFile = Record<ImagineClipId, JobRecord>;
 type TornadoJobFile = Record<TornadoImagineClipId, JobRecord>;
+type HomeFireJobFile = Record<HomeFireImagineClipId, JobRecord>;
 
 function loadEnvLocal(): void {
   const envPath = path.join(ROOT, ".env.local");
@@ -529,6 +547,7 @@ function selectedLessonId(): string {
   const index = process.argv.indexOf("--lesson");
   const value = index >= 0 ? process.argv[index + 1] : "hurricane-flood-1";
   if (value === "tornado" || value === "tornado-home-1") return TORNADO_LESSON_ID;
+  if (value === "home-fire" || value === "home-fire-1") return HOME_FIRE_LESSON_ID;
   return "hurricane-flood-1";
 }
 
@@ -802,8 +821,313 @@ async function generateTornadoPaidMedia(apiKey: string): Promise<void> {
   }
 }
 
+function svgText(x: number, y: number, fill: string, size: number, text: string): string {
+  return `<text x="${x}" y="${y}" fill="${fill}" font-size="${size}" font-family="system-ui,sans-serif">${xmlSafeText(text)}</text>`;
+}
+
+function writeHomeFireStills(): void {
+  mkdirSync(HOME_FIRE_STILL_DIR, { recursive: true });
+  const room = [
+    `<rect width="960" height="540" fill="#071018"/>`,
+    `<rect x="40" y="40" width="880" height="460" fill="#121c30" stroke="#9aacbf" stroke-width="2"/>`,
+    svgText(64, 88, "#f3d19a", 22, "Instructional still - not a live fire and not your house"),
+    svgText(64, 150, "#f4f0e6", 32, "Ground-floor bedroom"),
+    svgText(64, 200, "#c5cdd8", 22, "Fictional one-story house. Sound is not the only alarm signal."),
+    svgText(64, 250, "#c5cdd8", 22, "Not a tornado shelter. Not a flood scene."),
+    svgText(64, 430, "#9aacbf", 18, "Source: USFA home fire escape plans and Ready.gov home fires."),
+  ].join("\n");
+  const plan = [
+    `<rect width="960" height="540" fill="#071018"/>`,
+    svgText(40, 48, "#f3d19a", 20, "Labeled diagram - not a real house and not a certified route"),
+    `<rect x="280" y="80" width="420" height="360" fill="#0b1220" stroke="#9aacbf" stroke-width="3"/>`,
+    `<rect x="296" y="100" width="240" height="160" fill="#132033" stroke="#e8b86d" stroke-width="4"/>`,
+    svgText(312, 140, "#f3d19a", 22, "Bedroom - you are here"),
+    svgText(312, 176, "#c5cdd8", 18, "Hallway door: first way out"),
+    svgText(312, 204, "#c5cdd8", 18, "Check the door before opening"),
+    `<rect x="560" y="120" width="120" height="80" fill="#1c2b22" stroke="#9aacbf" stroke-width="3"/>`,
+    svgText(572, 154, "#f3d19a", 18, "Window"),
+    svgText(572, 182, "#f3d19a", 16, "second way"),
+    `<rect x="296" y="300" width="388" height="120" fill="#121c30" stroke="#c5cdd8" stroke-width="3"/>`,
+    svgText(312, 350, "#d6deea", 22, "Front of house: meeting place"),
+    svgText(312, 386, "#9aacbf", 16, "Stay out. Call 9-1-1."),
+    svgText(40, 140, "#d6deea", 20, "One-story house"),
+    svgText(40, 172, "#d6deea", 20, "Ground-floor bedroom"),
+    svgText(40, 500, "#9aacbf", 18, "USFA: two ways out of every room. This is not your floor plan."),
+  ].join("\n");
+  const yard = [
+    `<rect width="960" height="540" fill="#071018"/>`,
+    `<rect x="40" y="40" width="880" height="460" fill="#121c30" stroke="#9aacbf" stroke-width="2"/>`,
+    svgText(64, 88, "#f3d19a", 22, "Instructional still - outside meeting place, not a live fire"),
+    svgText(64, 160, "#f4f0e6", 32, "Meet in front of this house"),
+    svgText(64, 220, "#c5cdd8", 22, "Stay outside. Call 9-1-1. Do not go back in."),
+    svgText(64, 280, "#c5cdd8", 22, "Tell the operator if someone is still inside."),
+    svgText(64, 430, "#9aacbf", 18, "Source: USFA escape plans and Ready.gov home fires."),
+  ].join("\n");
+  writeFileSync(path.join(HOME_FIRE_STILL_DIR, "room.svg"), svgDocument(room));
+  writeFileSync(path.join(HOME_FIRE_STILL_DIR, "escape-plan.svg"), svgDocument(plan));
+  writeFileSync(path.join(HOME_FIRE_STILL_DIR, "yard.svg"), svgDocument(yard));
+}
+
+function emptyHomeFireJobs(): HomeFireJobFile {
+  return {
+    room: { requestId: null, status: "missing", diagnostic: null, sourceFile: null },
+    yard: { requestId: null, status: "missing", diagnostic: null, sourceFile: null },
+  };
+}
+
+function readHomeFireJobs(): HomeFireJobFile {
+  if (!existsSync(HOME_FIRE_JOBS_PATH)) return emptyHomeFireJobs();
+  try {
+    const parsed = JSON.parse(readFileSync(HOME_FIRE_JOBS_PATH, "utf8")) as Partial<HomeFireJobFile>;
+    return { ...emptyHomeFireJobs(), ...parsed };
+  } catch {
+    return emptyHomeFireJobs();
+  }
+}
+
+function writeHomeFireJobs(jobs: HomeFireJobFile): void {
+  writeFileSync(HOME_FIRE_JOBS_PATH, `${JSON.stringify(jobs, null, 2)}\n`);
+}
+
+function readHomeFireHashes(): Record<string, string> {
+  if (!existsSync(HOME_FIRE_HASH_PATH)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(HOME_FIRE_HASH_PATH, "utf8")) as Record<string, string>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeHomeFireHashes(hashes: Record<string, string>): void {
+  writeFileSync(HOME_FIRE_HASH_PATH, `${JSON.stringify(hashes, null, 2)}\n`);
+}
+
+function rewriteCaptionsFromExistingAudio(
+  lessonDir: string,
+  beats: { id: string; narration: string }[],
+): void {
+  const captionDir = path.join(lessonDir, "captions");
+  const audioDir = path.join(lessonDir, "audio");
+  mkdirSync(captionDir, { recursive: true });
+  for (const beat of beats) {
+    const audioPath = path.join(audioDir, `${beat.id}.mp3`);
+    const duration = existsSync(audioPath) ? probeDuration(audioPath) : VIDEO_DURATION_SECONDS;
+    writeFileSync(path.join(captionDir, `${beat.id}.vtt`), vttFromNarration(beat.narration, duration));
+    console.log(`Rewrote captions/${beat.id}.vtt using ${existsSync(audioPath) ? "existing audio" : "default"} duration ${duration.toFixed(3)}s.`);
+  }
+}
+
+function homeFireVisual(scene: string): HomeFireImagineClipId {
+  return scene === "fire-outside" ? "yard" : "room";
+}
+
+function writeHomeFireLocalMedia(): void {
+  writeHomeFireStills();
+  mkdirSync(HOME_FIRE_CAPTION_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_SOURCE_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_AUDIO_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_MUX_DIR, { recursive: true });
+  for (const beat of HOME_FIRE_BEATS) {
+    writeFileSync(path.join(HOME_FIRE_CAPTION_DIR, `${beat.id}.vtt`), vttFromNarration(beat.narration, VIDEO_DURATION_SECONDS));
+  }
+  const manifest = emptyHomeFireMediaManifest();
+  const json = `${JSON.stringify(manifest, null, 2)}\n`;
+  writeFileSync(path.join(HOME_FIRE_DIR, "manifest.json"), json);
+  writeFileSync(path.join(ROOT, "src", "lib", "lesson", "home-fire-media-manifest.json"), json);
+  console.log(
+    `Home-fire local stills and captions saved. Paid generation: ${HOME_FIRE_IMAGINE_CLIP_IDS.length} Imagine clips (${Object.keys(HOME_FIRE_CLIP_PROMPTS).join(", ")}) and ${HOME_FIRE_BEATS.length} TTS jobs.`,
+  );
+}
+
+function writeHomeFireManifest(jobs: HomeFireJobFile, hashes: Record<string, string>): void {
+  const manifest = emptyHomeFireMediaManifest();
+  manifest.generatedAt = new Date().toISOString();
+  let savedCount = 0;
+  for (const clipId of HOME_FIRE_IMAGINE_CLIP_IDS) {
+    const job = jobs[clipId];
+    const stillRel = clipId === "yard" ? "stills/yard.svg" : "stills/room.svg";
+    manifest.clips[clipId] = {
+      requestId: job.requestId,
+      sourceFile: job.sourceFile,
+      stillFile: stillRel,
+      status: job.status,
+      diagnostic: job.diagnostic,
+    };
+    if (job.status === "saved") savedCount += 1;
+  }
+  for (const clip of narrationClips(HOME_FIRE_BEATS)) {
+    const visual = homeFireVisual(clip.scene);
+    const audioRel = existsSync(path.join(HOME_FIRE_AUDIO_DIR, `${clip.id}.mp3`)) ? `audio/${clip.id}.mp3` : null;
+    const muxRel = existsSync(path.join(HOME_FIRE_MUX_DIR, `${clip.id}.mp4`)) ? `muxed/${clip.id}.mp4` : null;
+    const captionRel = existsSync(path.join(HOME_FIRE_CAPTION_DIR, `${clip.id}.vtt`)) ? `captions/${clip.id}.vtt` : null;
+    const keepDiagram = HOME_FIRE_DIAGRAM_BEATS.has(clip.id);
+    const stillRel = keepDiagram ? "stills/escape-plan.svg" : homeFireStillForScene(clip.scene);
+    const expectedHash = narrationFingerprint(clip.text);
+    const storedHash = hashes[clip.id] ?? null;
+    const audioIsCurrent = Boolean(audioRel && storedHash === expectedHash);
+    let muxStatus: "ready" | "audio-only" | "still-only" | "missing" = "still-only";
+    let narrationStatus: "current" | "stale" | "missing" = "missing";
+    let note = "On-screen teaching text is current. Home-fire video and Grok Voice narration have not been generated.";
+    if (audioRel && !audioIsCurrent) {
+      narrationStatus = "stale";
+      note =
+        "On-screen teaching text is current. Existing voice audio is from a previous script and is not attached until you regenerate narration.";
+    }
+    if (audioIsCurrent && keepDiagram) {
+      muxStatus = "audio-only";
+      narrationStatus = "current";
+      note =
+        "Current narration is available. The labeled escape diagram is the instructional visual. Generated footage is illustrative only.";
+    } else if (audioIsCurrent && muxRel && !keepDiagram) {
+      muxStatus = "ready";
+      narrationStatus = "current";
+      note =
+        "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram.";
+    } else if (audioIsCurrent) {
+      muxStatus = "audio-only";
+      narrationStatus = "current";
+      note = "Current narration is available. A labeled still is shown.";
+    }
+    manifest.beats[clip.id] = {
+      video: audioIsCurrent && muxRel && !keepDiagram ? muxRel : null,
+      audio: audioIsCurrent ? audioRel : null,
+      captions: audioIsCurrent ? captionRel : null,
+      still: stillRel,
+      visualSource: visual,
+      muxStatus,
+      narrationStatus,
+      narrationFingerprint: audioIsCurrent ? expectedHash : storedHash,
+      note,
+    };
+  }
+  manifest.videoStatus =
+    savedCount === HOME_FIRE_IMAGINE_CLIP_IDS.length ? "ready" : savedCount > 0 ? "partial" : "not-generated";
+  const json = `${JSON.stringify(manifest, null, 2)}\n`;
+  writeFileSync(path.join(HOME_FIRE_DIR, "manifest.json"), json);
+  writeFileSync(path.join(ROOT, "src", "lib", "lesson", "home-fire-media-manifest.json"), json);
+}
+
+async function generateHomeFireClip(
+  apiKey: string,
+  clipId: HomeFireImagineClipId,
+  jobs: HomeFireJobFile,
+): Promise<string | null> {
+  const sourcePath = path.join(HOME_FIRE_SOURCE_DIR, `${clipId}.mp4`);
+  if (existsSync(sourcePath)) {
+    jobs[clipId] = {
+      requestId: jobs[clipId].requestId,
+      status: "saved",
+      diagnostic: null,
+      sourceFile: `source/${clipId}.mp4`,
+    };
+    writeHomeFireJobs(jobs);
+    console.log(`Skipping Imagine for home-fire ${clipId}; source file already exists.`);
+    return null;
+  }
+  if (jobs[clipId].status === "failed") {
+    const diagnostic = jobs[clipId].diagnostic ?? "video_generation_failed";
+    console.error(`Home-fire ${clipId} previously failed (${diagnostic}). Not retrying in this run.`);
+    return diagnostic;
+  }
+  let requestId = jobs[clipId].requestId;
+  if (!requestId) {
+    console.log(`Submitting Imagine job for home-fire ${clipId}…`);
+    const started = await startGeneration(apiKey, HOME_FIRE_CLIP_PROMPTS[clipId]);
+    if ("diagnostic" in started) {
+      jobs[clipId] = { requestId: null, status: "failed", diagnostic: started.diagnostic, sourceFile: null };
+      writeHomeFireJobs(jobs);
+      console.error(`Home-fire ${clipId} failed: ${started.diagnostic}`);
+      return started.diagnostic;
+    }
+    requestId = started.requestId;
+    jobs[clipId] = { requestId, status: "pending", diagnostic: null, sourceFile: null };
+    writeHomeFireJobs(jobs);
+  } else {
+    console.log(`Polling existing home-fire ${clipId} job…`);
+  }
+  const saved = await pollAndSaveTo(apiKey, clipId, requestId, HOME_FIRE_DIR);
+  if ("diagnostic" in saved) {
+    jobs[clipId] = { requestId, status: "failed", diagnostic: saved.diagnostic, sourceFile: null };
+    writeHomeFireJobs(jobs);
+    console.error(`Home-fire ${clipId} failed: ${saved.diagnostic}`);
+    return saved.diagnostic;
+  }
+  jobs[clipId] = { requestId, status: "saved", diagnostic: null, sourceFile: saved.sourceFile };
+  writeHomeFireJobs(jobs);
+  return null;
+}
+
+async function generateHomeFirePaidMedia(apiKey: string): Promise<void> {
+  requireFfmpeg();
+  mkdirSync(HOME_FIRE_SOURCE_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_AUDIO_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_MUX_DIR, { recursive: true });
+  mkdirSync(HOME_FIRE_CAPTION_DIR, { recursive: true });
+  const jobs = readHomeFireJobs();
+  const paidFailures: string[] = [];
+  for (const clipId of HOME_FIRE_IMAGINE_CLIP_IDS) {
+    const failure = await generateHomeFireClip(apiKey, clipId, jobs);
+    if (failure) {
+      paidFailures.push(`${clipId}: ${failure}`);
+      console.error(`Stopping remaining Imagine jobs after home-fire ${clipId} failed. TTS will still run. Report this error before any retry.`);
+      break;
+    }
+  }
+  const hashes = readHomeFireHashes();
+  for (const clip of narrationClips(HOME_FIRE_BEATS)) {
+    const expected = narrationFingerprint(clip.text);
+    const audioPath = path.join(HOME_FIRE_AUDIO_DIR, `${clip.id}.mp3`);
+    const needsTts = !existsSync(audioPath) || hashes[clip.id] !== expected;
+    if (!needsTts) {
+      console.log(`Skipping unchanged home-fire narration for ${clip.id}.`);
+      continue;
+    }
+    const audioRel = await generateNarration(apiKey, clip.id, clip.text, true, HOME_FIRE_DIR);
+    if (!audioRel) {
+      paidFailures.push(`${clip.id}: tts_failed`);
+      console.error(`Stopping remaining TTS jobs after ${clip.id} failed. Report this error before any retry.`);
+      break;
+    }
+    hashes[clip.id] = expected;
+    writeHomeFireHashes(hashes);
+    const duration = probeDuration(path.join(HOME_FIRE_DIR, audioRel));
+    writeFileSync(path.join(HOME_FIRE_CAPTION_DIR, `${clip.id}.vtt`), vttFromNarration(clip.text, duration));
+    if (HOME_FIRE_DIAGRAM_BEATS.has(clip.id)) {
+      console.log(`Keeping labeled escape diagram for ${clip.id}; not muxing Imagine footage as the instructional visual.`);
+      continue;
+    }
+    const visual = homeFireVisual(clip.scene);
+    const sourceRel = jobs[visual].sourceFile;
+    const muxPath = path.join(HOME_FIRE_MUX_DIR, `${clip.id}.mp4`);
+    if (sourceRel && existsSync(path.join(HOME_FIRE_DIR, sourceRel))) {
+      const ok = muxNarration(path.join(HOME_FIRE_DIR, sourceRel), path.join(HOME_FIRE_DIR, audioRel), muxPath, duration);
+      if (!ok) console.error(`${clip.id} mux failed: ffmpeg_error`);
+    }
+  }
+  writeHomeFireManifest(jobs, hashes);
+  console.log("Home-fire lesson media manifest saved.");
+  if (paidFailures.length > 0) {
+    throw new Error(`Home-fire paid generation reported failures: ${paidFailures.join("; ")}`);
+  }
+}
+
 async function main(): Promise<void> {
   loadEnvLocal();
+  if (process.argv.includes("--captions-only")) {
+    requireFfmpeg();
+    if (selectedLessonId() === HOME_FIRE_LESSON_ID) {
+      rewriteCaptionsFromExistingAudio(HOME_FIRE_DIR, HOME_FIRE_BEATS);
+      console.log("Home-fire captions rewritten from existing audio. No Imagine or TTS calls.");
+      return;
+    }
+    if (selectedLessonId() === TORNADO_LESSON_ID) {
+      rewriteCaptionsFromExistingAudio(TORNADO_DIR, TORNADO_BEATS);
+      console.log("Tornado captions rewritten from existing audio. No Imagine or TTS calls.");
+      return;
+    }
+    throw new Error("Use --lesson home-fire-1 or --lesson tornado-home-1 with --captions-only.");
+  }
   if (selectedLessonId() === TORNADO_LESSON_ID) {
     writeTornadoLocalMedia();
     if (!process.argv.includes("--confirm-paid")) {
@@ -817,6 +1141,21 @@ async function main(): Promise<void> {
       throw new Error("XAI_API_KEY is missing. Add it to the environment or .env.local.");
     }
     await generateTornadoPaidMedia(apiKey);
+    return;
+  }
+  if (selectedLessonId() === HOME_FIRE_LESSON_ID) {
+    writeHomeFireLocalMedia();
+    if (!process.argv.includes("--confirm-paid")) {
+      console.log(
+        `No Imagine or TTS calls. Later paid command: npm run generate:lesson-media -- --lesson home-fire-1 --confirm-paid (${HOME_FIRE_IMAGINE_CLIP_IDS.length} video, ${HOME_FIRE_BEATS.length} TTS).`,
+      );
+      return;
+    }
+    const apiKey = process.env.XAI_API_KEY?.trim();
+    if (!apiKey) {
+      throw new Error("XAI_API_KEY is missing. Add it to the environment or .env.local.");
+    }
+    await generateHomeFirePaidMedia(apiKey);
     return;
   }
   const narrationOnly = process.argv.includes("--narration-only");

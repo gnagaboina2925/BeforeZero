@@ -5,7 +5,7 @@ Accessible emergency-learning website. Tagline: **Practice before it matters.**
 Three on-site paths:
 
 1. **Learn** (`/learn`) — two sourced U.S. storm case studies from NHC and FEMA records.
-2. **Practice** (`/practice`) — choose the hurricane or tornado lesson. Stable URLs: `/practice/hurricane` and `/practice/tornado`. The hurricane lesson remains at that path; `/practice/hurricane-flood-1` redirects there. Secondary: `/simulate` (blackout) and `/practice/rehearsal` (five-step household rehearsal).
+2. **Practice** (`/practice`) — choose the hurricane, tornado, or home-fire lesson. Stable URLs: `/practice/hurricane`, `/practice/tornado`, and `/practice/home-fire`. Long lesson ids redirect to those slugs. Secondary: `/simulate` (blackout) and `/practice/rehearsal` (five-step household rehearsal).
 3. **Alerts** (`/alerts`) — on-demand National Weather Service active alerts for a U.S. place you confirm. Not a notification or dispatch service. Browser geolocation is not requested.
 
 Display and listening options (text size, contrast, captions, narration controls, reduced motion) do not ask for a disability. This project does not claim WCAG certification.
@@ -82,6 +82,20 @@ npm run generate:lesson-media -- --lesson tornado-home-1 --confirm-paid
 ```
 
 Reviewed tornado URLs (26 Sep 2026): https://www.weather.gov/safety/tornado-ww ; https://www.weather.gov/safety/tornado-during ; https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html
+
+Home-fire media lives under `public/lesson/home-fire/`. Local labeled SVGs and captions do not call Imagine or TTS:
+
+```bash
+npm run generate:lesson-media -- --lesson home-fire-1
+```
+
+Paid home-fire generation (not run until approved with `--confirm-paid`): **2** Grok Imagine video jobs (`room`, `yard`) and **10** Grok TTS jobs. It does not regenerate hurricane or tornado clips. The labeled escape diagram stays the instructional visual; Imagine footage is illustrative only.
+
+```bash
+npm run generate:lesson-media -- --lesson home-fire-1 --confirm-paid
+```
+
+Reviewed home-fire URLs (26 Sep 2026): https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/home-fire-escape-plans/ ; https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/smoke-alarms/ ; https://www.usfa.fema.gov/prevention/home-fires/at-risk-audiences/people-with-disabilities/ ; https://www.ready.gov/home-fires ; https://www.ready.gov/home-fire-escape-plan
 
 ## Grok Imagine scene illustrations
 

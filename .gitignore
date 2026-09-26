@@ -40,6 +40,9 @@ public/lesson/narration-hashes.json
 public/lesson/tornado/jobs.json
 public/lesson/tornado/source/
 public/lesson/tornado/narration-hashes.json
+public/lesson/home-fire/jobs.json
+public/lesson/home-fire/source/
+public/lesson/home-fire/narration-hashes.json
 
 # vercel
 .vercel

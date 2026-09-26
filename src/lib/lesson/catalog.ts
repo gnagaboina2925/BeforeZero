@@ -1,5 +1,5 @@
 import type { LessonSourceId } from "./sources.ts";
-export { LESSON_SOURCE_LINKS, TORNADO_SOURCE_LINKS } from "./sources.ts";
+export { HOME_FIRE_SOURCE_LINKS, LESSON_SOURCE_LINKS, TORNADO_SOURCE_LINKS } from "./sources.ts";
 
 export const LESSON_ID = "hurricane-flood-1";
 
@@ -16,6 +16,14 @@ export const LESSON_ACTION_IDS = [
   "watch-from-window",
   "drive-away",
   "stay-put-watch",
+  "leave-now-get-low",
+  "wait-for-sound",
+  "go-back-inside",
+  "go-basement-fire",
+  "use-second-way",
+  "open-hot-door",
+  "stay-signal-911",
+  "stay-no-call",
 ] as const;
 export type LessonActionId = (typeof LESSON_ACTION_IDS)[number];
 
@@ -29,17 +37,25 @@ export type LessonCondition =
   | "tornado-watch"
   | "tornado-prepare"
   | "tornado-warning-home"
-  | "tornado-access";
+  | "tornado-access"
+  | "fire-prepare"
+  | "fire-alarm"
+  | "fire-blocked"
+  | "fire-outside"
+  | "fire-access";
 export type LessonOverlayId =
   | "none"
   | "alert-card"
   | "flooded-road"
   | "building-cutaway"
   | "tornado-alert-card"
-  | "tornado-home-shelter";
+  | "tornado-home-shelter"
+  | "fire-escape-plan"
+  | "fire-blocked-door";
 export type HurricaneSceneId = "watch" | "rain" | "street" | "interior" | "flood";
 export type TornadoSceneId = "tornado-sky" | "tornado-shelter";
-export type LessonSceneId = HurricaneSceneId | TornadoSceneId;
+export type HomeFireSceneId = "fire-room" | "fire-outside";
+export type LessonSceneId = HurricaneSceneId | TornadoSceneId | HomeFireSceneId;
 
 export interface LessonAction {
   id: LessonActionId;
@@ -397,6 +413,16 @@ export function conditionLabel(condition: LessonCondition | null): string | null
       return "Condition: fictional tornado warning in a sturdy house with a basement";
     case "tornado-access":
       return "Condition: access considerations in the same sturdy-home setting";
+    case "fire-prepare":
+      return "Condition: prepare alarms, two ways out, and assistance before a fire";
+    case "fire-alarm":
+      return "Condition: fictional smoke-alarm warning in a one-story house";
+    case "fire-blocked":
+      return "Condition: fictional hot or blocked hallway door";
+    case "fire-outside":
+      return "Condition: outside meeting place after leaving this house";
+    case "fire-access":
+      return "Condition: access considerations in the same one-story setting";
     default:
       return null;
   }

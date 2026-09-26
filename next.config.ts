@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/practice/tornado-home-1",
-        destination: "/practice/tornado",
+        source: "/practice/home-fire-1",
+        destination: "/practice/home-fire",
         permanent: false,
       },
     ];

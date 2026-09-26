@@ -13,6 +13,17 @@ import {
   type PracticeFeedback,
 } from "./catalog.ts";
 import {
+  HOME_FIRE_ACCESS_NOTE,
+  HOME_FIRE_BEATS,
+  HOME_FIRE_LESSON_ID,
+  HOME_FIRE_PREPARE_CHECKLIST,
+  HOME_FIRE_SOURCE_LINKS_FOR_LESSON,
+  HOME_FIRE_TAKEAWAYS,
+  homeFireBeatById,
+  homeFireBeatsForMode,
+  homeFirePracticeFeedback,
+} from "./home-fire.ts";
+import {
   TORNADO_ACCESS_NOTE,
   TORNADO_BEATS,
   TORNADO_LESSON_ID,
@@ -24,7 +35,7 @@ import {
   tornadoPracticeFeedback,
 } from "./tornado.ts";
 
-export type PlatformLessonId = typeof LESSON_ID | typeof TORNADO_LESSON_ID;
+export type PlatformLessonId = typeof LESSON_ID | typeof TORNADO_LESSON_ID | typeof HOME_FIRE_LESSON_ID;
 
 export interface LessonDefinition {
   id: PlatformLessonId;
@@ -107,12 +118,41 @@ export const LESSON_DEFINITIONS: Record<PlatformLessonId, LessonDefinition> = {
     beatById: tornadoBeatById,
     practiceFeedback: tornadoPracticeFeedback,
   },
+  "home-fire-1": {
+    id: "home-fire-1",
+    slug: "home-fire",
+    aliases: ["home-fire", "home-fire-1"],
+    title: "Home-fire preparation and escape",
+    cardSummary: "Alarms, two ways out, a blocked-door complication, and access notes for one house type.",
+    kicker: "Guided emergency training",
+    heading: "Know the alarm. Know two ways out.",
+    lede: "Learn a sourced escape plan, see a labeled diagram, and practice at your pace.",
+    previewStill: "/lesson/home-fire/stills/escape-plan.svg",
+    previewCaption: "Home-fire training: fictional one-story house",
+    previewNote: "Labeled escape diagram is the instruction. Generated clips are illustrative only.",
+    mediaBasePath: "/lesson/home-fire",
+    printTitle: "Home-fire preparation and escape",
+    objectives: [
+      "Prepare alarms and an escape plan",
+      "Leave when an alarm warns you",
+      "Use a second way out or trapped-in-place steps",
+    ],
+    beats: HOME_FIRE_BEATS,
+    takeaways: HOME_FIRE_TAKEAWAYS,
+    prepareHeading: "Prepare before a fire",
+    prepareChecklist: HOME_FIRE_PREPARE_CHECKLIST,
+    accessNote: HOME_FIRE_ACCESS_NOTE,
+    sourceLinks: HOME_FIRE_SOURCE_LINKS_FOR_LESSON,
+    beatsForMode: homeFireBeatsForMode,
+    beatById: homeFireBeatById,
+    practiceFeedback: homeFirePracticeFeedback,
+  },
 };
 
 export const LESSON_LIST = Object.values(LESSON_DEFINITIONS);
 
 export function isPlatformLessonId(value: string): value is PlatformLessonId {
-  return value === LESSON_ID || value === TORNADO_LESSON_ID;
+  return value === LESSON_ID || value === TORNADO_LESSON_ID || value === HOME_FIRE_LESSON_ID;
 }
 
 export function lessonIdFromSlug(slug: string): PlatformLessonId | null {

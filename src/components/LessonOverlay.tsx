@@ -20,6 +20,8 @@ export function LessonOverlay({
       {overlay === "building-cutaway" ? <BuildingCutawayOverlay /> : null}
       {overlay === "tornado-alert-card" ? <TornadoAlertOverlay /> : null}
       {overlay === "tornado-home-shelter" ? <TornadoHomeShelterOverlay /> : null}
+      {overlay === "fire-escape-plan" ? <FireEscapePlanOverlay /> : null}
+      {overlay === "fire-blocked-door" ? <FireBlockedDoorOverlay /> : null}
       <p className="sr-only">{description}</p>
     </div>
   );
@@ -179,6 +181,88 @@ function TornadoHomeShelterOverlay() {
       </text>
       <text x="16" y="250" fill="#9aacbf" fontSize="12">
         Stairs may be inaccessible. See the access step for sourced wheelchair and limited-mobility notes.
+      </text>
+    </svg>
+  );
+}
+
+function FireEscapePlanOverlay() {
+  return (
+    <svg className="lesson-overlay-svg" viewBox="0 0 640 280" role="img" aria-hidden="true">
+      <text x="16" y="24" fill="#f3d19a" fontSize="13">
+        Conceptual one-story house — not a real floor plan, not a certified route
+      </text>
+      <rect x="200" y="40" width="300" height="200" fill="#0b1220" stroke="#9aacbf" strokeWidth="2" />
+      <rect x="212" y="52" width="160" height="110" fill="#132033" stroke="#e8b86d" strokeWidth="3" />
+      <text x="224" y="76" fill="#f3d19a" fontSize="14">
+        Bedroom — you are here
+      </text>
+      <text x="224" y="98" fill="#c5cdd8" fontSize="12">
+        Hallway door: first way out
+      </text>
+      <text x="224" y="118" fill="#c5cdd8" fontSize="12">
+        Check the door before opening
+      </text>
+      <rect x="388" y="64" width="96" height="56" fill="#1c2b22" stroke="#9aacbf" strokeWidth="2" />
+      <text x="400" y="88" fill="#f3d19a" fontSize="12">
+        Window
+      </text>
+      <text x="400" y="106" fill="#f3d19a" fontSize="12">
+        second way
+      </text>
+      <rect x="212" y="176" width="276" height="50" fill="#121c30" stroke="#c5cdd8" strokeWidth="2" />
+      <text x="224" y="206" fill="#d6deea" fontSize="13">
+        Front of house: outside meeting place
+      </text>
+      <text x="16" y="70" fill="#d6deea" fontSize="13">
+        Setting:
+      </text>
+      <text x="16" y="92" fill="#d6deea" fontSize="13">
+        one-story house
+      </text>
+      <text x="16" y="114" fill="#d6deea" fontSize="13">
+        ground-floor bedroom
+      </text>
+      <text x="16" y="250" fill="#9aacbf" fontSize="12">
+        Not a high-rise. Stairs are not assumed. This is not tornado sheltering.
+      </text>
+    </svg>
+  );
+}
+
+function FireBlockedDoorOverlay() {
+  return (
+    <svg className="lesson-overlay-svg" viewBox="0 0 640 280" role="img" aria-hidden="true">
+      <text x="16" y="24" fill="#f3d19a" fontSize="13">
+        Same fictional house — hot door stays closed. Not a live fire.
+      </text>
+      <rect x="200" y="40" width="300" height="200" fill="#0b1220" stroke="#9aacbf" strokeWidth="2" />
+      <rect x="212" y="52" width="160" height="110" fill="#2a1a1a" stroke="#e8b86d" strokeWidth="3" />
+      <text x="224" y="76" fill="#f3d19a" fontSize="13">
+        Hallway door: keep closed
+      </text>
+      <text x="224" y="98" fill="#c5cdd8" fontSize="12">
+        Hot, or smoke around the door
+      </text>
+      <text x="224" y="118" fill="#c5cdd8" fontSize="12">
+        Do not open to check
+      </text>
+      <rect x="388" y="64" width="96" height="56" fill="#1c2b22" stroke="#e8b86d" strokeWidth="2" />
+      <text x="400" y="88" fill="#f3d19a" fontSize="12">
+        Second way
+      </text>
+      <text x="400" y="106" fill="#f3d19a" fontSize="12">
+        if usable here
+      </text>
+      <rect x="212" y="176" width="276" height="50" fill="#121c30" stroke="#c5cdd8" strokeWidth="2" />
+      <text x="224" y="198" fill="#d6deea" fontSize="12">
+        If you cannot get out: close door, cover
+      </text>
+      <text x="224" y="216" fill="#d6deea" fontSize="12">
+        vents, call 9-1-1, signal at a window
+      </text>
+      <text x="16" y="250" fill="#9aacbf" fontSize="12">
+        This diagram does not certify a window route in your building.
       </text>
     </svg>
   );

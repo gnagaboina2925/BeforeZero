@@ -1,0 +1,134 @@
+{
+  "lessonId": "home-fire-1",
+  "videoModel": "grok-imagine-video-1.5",
+  "videoStatus": "ready",
+  "generatedAt": "2026-09-26T18:17:59.301Z",
+  "clips": {
+    "room": {
+      "requestId": "c040a2d3-0820-9c71-950a-2fd01590202d",
+      "sourceFile": "source/room.mp4",
+      "stillFile": "stills/room.svg",
+      "status": "saved",
+      "diagnostic": null
+    },
+    "yard": {
+      "requestId": "3c214a3b-c7be-9426-85c3-ed1c7bb0991b",
+      "sourceFile": "source/yard.mp4",
+      "stillFile": "stills/yard.svg",
+      "status": "saved",
+      "diagnostic": null
+    }
+  },
+  "beats": {
+    "fire-intro": {
+      "video": "muxed/fire-intro.mp4",
+      "audio": "audio/fire-intro.mp3",
+      "captions": "captions/fire-intro.vtt",
+      "still": "stills/room.svg",
+      "visualSource": "room",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "3c6edcb5",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-prep": {
+      "video": "muxed/fire-prep.mp4",
+      "audio": "audio/fire-prep.mp3",
+      "captions": "captions/fire-prep.vtt",
+      "still": "stills/room.svg",
+      "visualSource": "room",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "e5caafd",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-demo-plan": {
+      "video": null,
+      "audio": "audio/fire-demo-plan.mp3",
+      "captions": "captions/fire-demo-plan.vtt",
+      "still": "stills/escape-plan.svg",
+      "visualSource": "room",
+      "muxStatus": "audio-only",
+      "narrationStatus": "current",
+      "narrationFingerprint": "590e22aa",
+      "note": "Current narration is available. The labeled escape diagram is the instructional visual. Generated footage is illustrative only."
+    },
+    "fire-alarm": {
+      "video": "muxed/fire-alarm.mp4",
+      "audio": "audio/fire-alarm.mp3",
+      "captions": "captions/fire-alarm.vtt",
+      "still": "stills/room.svg",
+      "visualSource": "room",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "c0022955",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-alarm-decision": {
+      "video": null,
+      "audio": "audio/fire-alarm-decision.mp3",
+      "captions": "captions/fire-alarm-decision.vtt",
+      "still": "stills/escape-plan.svg",
+      "visualSource": "room",
+      "muxStatus": "audio-only",
+      "narrationStatus": "current",
+      "narrationFingerprint": "32108b0f",
+      "note": "Current narration is available. The labeled escape diagram is the instructional visual. Generated footage is illustrative only."
+    },
+    "fire-blocked": {
+      "video": "muxed/fire-blocked.mp4",
+      "audio": "audio/fire-blocked.mp3",
+      "captions": "captions/fire-blocked.vtt",
+      "still": "stills/room.svg",
+      "visualSource": "room",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "5170b57e",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-blocked-decision": {
+      "video": null,
+      "audio": "audio/fire-blocked-decision.mp3",
+      "captions": "captions/fire-blocked-decision.vtt",
+      "still": "stills/escape-plan.svg",
+      "visualSource": "room",
+      "muxStatus": "audio-only",
+      "narrationStatus": "current",
+      "narrationFingerprint": "8c555f74",
+      "note": "Current narration is available. The labeled escape diagram is the instructional visual. Generated footage is illustrative only."
+    },
+    "fire-outside": {
+      "video": "muxed/fire-outside.mp4",
+      "audio": "audio/fire-outside.mp3",
+      "captions": "captions/fire-outside.vtt",
+      "still": "stills/yard.svg",
+      "visualSource": "yard",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "451da6cd",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-access": {
+      "video": "muxed/fire-access.mp4",
+      "audio": "audio/fire-access.mp3",
+      "captions": "captions/fire-access.vtt",
+      "still": "stills/room.svg",
+      "visualSource": "room",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f7254f56",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    },
+    "fire-debrief": {
+      "video": "muxed/fire-debrief.mp4",
+      "audio": "audio/fire-debrief.mp3",
+      "captions": "captions/fire-debrief.vtt",
+      "still": "stills/yard.svg",
+      "visualSource": "yard",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f4f739ec",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Escape instructions stay in the sourced text and labeled diagram."
+    }
+  }
+}

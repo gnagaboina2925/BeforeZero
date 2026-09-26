@@ -35,7 +35,16 @@ export type LessonSourceId =
   | "cdc-tornado-vehicle"
   | "cdc-tornado-outside"
   | "cdc-tornado-wheelchair"
-  | "cdc-tornado-unable-to-move";
+  | "cdc-tornado-unable-to-move"
+  | "usfa-escape-plans"
+  | "usfa-smoke-alarms"
+  | "usfa-fire-disability"
+  | "ready-home-fires-speed"
+  | "ready-home-fires-alarms"
+  | "ready-home-fires-plan"
+  | "ready-home-fires-during"
+  | "ready-home-fires-after"
+  | "ready-home-fire-drill";
 
 export interface LessonSource {
   id: LessonSourceId;
@@ -333,12 +342,92 @@ export const LESSON_SOURCES: Record<LessonSourceId, LessonSource> = {
     excerpt:
       "If you're unable to move from a bed or a chair and assistance is not available, protect yourself from falling objects by covering up with blankets and pillows.",
   },
+  "usfa-escape-plans": {
+    id: "usfa-escape-plans",
+    title: "USFA — Home Fire Escape Plans",
+    url: "https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/home-fire-escape-plans/",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Residents could have less than 2 minutes to escape a home fire once the smoke alarm sounds. Draw a map of your home. Include all doors and windows. Find 2 ways out of every room. Make sure doors and windows are not blocked. Choose an outside meeting place in front of your home. Practice your home fire drill with everyone in the home. Get outside to your meeting place.",
+  },
+  "usfa-smoke-alarms": {
+    id: "usfa-smoke-alarms",
+    title: "USFA — Smoke Alarms",
+    url: "https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/smoke-alarms/",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Put smoke alarms inside and outside each bedroom and sleeping area. Put alarms on every level of the home. Smoke alarms should be interconnected. When one sounds, they all sound. There are also alarms for people with hearing loss. These alarms may have strobe lights that flash and/or vibrate. Test your alarms every month. When you hear a smoke alarm, you may have less than 2 minutes to get everyone outside and safe.",
+  },
+  "usfa-fire-disability": {
+    id: "usfa-fire-disability",
+    title: "USFA — Fire Safety for People with Disabilities",
+    url: "https://www.usfa.fema.gov/prevention/home-fires/at-risk-audiences/people-with-disabilities/",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Have smoke alarms on every level of your home, inside bedrooms and outside sleeping areas. Interconnect your alarms so that when one sounds, they all sound. If you are deaf or hard of hearing, use smoke alarms with a vibrating pad, flashing light or strobe light. Test your alarms every month. Know 2 ways out of every room. If possible, live near an exit. You’ll be safest on the ground floor if you live in an apartment building. If you live in a multistory home, sleep on the first floor.",
+  },
+  "ready-home-fires-speed": {
+    id: "ready-home-fires-speed",
+    title: "Ready.gov Home Fires — Learn About Fires",
+    url: "https://www.ready.gov/home-fires",
+    retrieved: "2026-09-26",
+    excerpt:
+      "A fire can become life-threatening in just two minutes. Smoke and toxic gases kill more people than flames do.",
+  },
+  "ready-home-fires-alarms": {
+    id: "ready-home-fires-alarms",
+    title: "Ready.gov Home Fires — Smoke Alarms",
+    url: "https://www.ready.gov/home-fires",
+    retrieved: "2026-09-26",
+    excerpt:
+      "A working smoke alarm significantly increases your chances of surviving a deadly home fire. Install smoke alarms on every level of your home, including the basement. Audible alarms are available for visually impaired people and smoke alarms with a vibrating pad or flashing light are available for the hearing impaired.",
+  },
+  "ready-home-fires-plan": {
+    id: "ready-home-fires-plan",
+    title: "Ready.gov Home Fires — Create and Practice a Fire Escape Plan",
+    url: "https://www.ready.gov/home-fires",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Find two ways to get out of each room in the event the primary way is blocked by fire or smoke. Make sure that windows are not stuck, screens can be taken out quickly and that security bars can be properly opened. If you use a walker or wheelchair, check all exits to be sure you can get through the doorways. Practice your home fire escape plan twice each year.",
+  },
+  "ready-home-fires-during": {
+    id: "ready-home-fires-during",
+    title: "Ready.gov Home Fires — During a Fire",
+    url: "https://www.ready.gov/home-fires",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Drop down to the floor and crawl low, under any smoke to your exit. Before opening a door, feel the doorknob and door. If either is hot, or if there is smoke coming around the door, leave the door closed and use your second way out. If you can’t get to someone needing assistance, leave the home and call 9-1-1 or the fire department. Tell the emergency operator where the person is located. If you can’t get out, close the door and cover vents and cracks around doors with cloth or tape to keep smoke out. Call 9-1-1 or your fire department. Say where you are and signal for help at the window with a light-colored cloth or a flashlight.",
+  },
+  "ready-home-fires-after": {
+    id: "ready-home-fires-after",
+    title: "Ready.gov Home Fires — After a Fire",
+    url: "https://www.ready.gov/home-fires",
+    retrieved: "2026-09-26",
+    excerpt: "Check with the fire department to make sure your residence is safe to enter.",
+  },
+  "ready-home-fire-drill": {
+    id: "ready-home-fire-drill",
+    title: "Ready.gov — Practice Your Home Fire Escape Plan",
+    url: "https://www.ready.gov/home-fire-escape-plan",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Choose a safe meeting place a safe distance from your home. Once they are out, stay out. In a real fire, get to the safe meeting place, then call 9-1-1 and keep everyone close until firefighters arrive.",
+  },
 };
 
 export const LESSON_SOURCE_LINKS = [
   { title: "Hurricanes (Ready.gov)", url: "https://www.ready.gov/hurricanes" },
   { title: "Floods (Ready.gov)", url: "https://www.ready.gov/floods" },
   { title: "Emergency Alerts (Ready.gov)", url: "https://www.ready.gov/alerts" },
+  { title: "People with Disabilities (Ready.gov)", url: "https://www.ready.gov/disability" },
+] as const;
+
+export const HOME_FIRE_SOURCE_LINKS = [
+  { title: "Home Fire Escape Plans (USFA)", url: "https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/home-fire-escape-plans/" },
+  { title: "Smoke Alarms (USFA)", url: "https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/smoke-alarms/" },
+  { title: "Fire Safety for People with Disabilities (USFA)", url: "https://www.usfa.fema.gov/prevention/home-fires/at-risk-audiences/people-with-disabilities/" },
+  { title: "Home Fires (Ready.gov)", url: "https://www.ready.gov/home-fires" },
+  { title: "Practice Your Home Fire Escape Plan (Ready.gov)", url: "https://www.ready.gov/home-fire-escape-plan" },
   { title: "People with Disabilities (Ready.gov)", url: "https://www.ready.gov/disability" },
 ] as const;
 

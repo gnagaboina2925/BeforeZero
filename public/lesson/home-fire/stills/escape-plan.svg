@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-hidden="true">
+<rect width="960" height="540" fill="#071018"/>
+<text x="40" y="48" fill="#f3d19a" font-size="20" font-family="system-ui,sans-serif">Labeled diagram - not a real house and not a certified route</text>
+<rect x="280" y="80" width="420" height="360" fill="#0b1220" stroke="#9aacbf" stroke-width="3"/>
+<rect x="296" y="100" width="240" height="160" fill="#132033" stroke="#e8b86d" stroke-width="4"/>
+<text x="312" y="140" fill="#f3d19a" font-size="22" font-family="system-ui,sans-serif">Bedroom - you are here</text>
+<text x="312" y="176" fill="#c5cdd8" font-size="18" font-family="system-ui,sans-serif">Hallway door: first way out</text>
+<text x="312" y="204" fill="#c5cdd8" font-size="18" font-family="system-ui,sans-serif">Check the door before opening</text>
+<rect x="560" y="120" width="120" height="80" fill="#1c2b22" stroke="#9aacbf" stroke-width="3"/>
+<text x="572" y="154" fill="#f3d19a" font-size="18" font-family="system-ui,sans-serif">Window</text>
+<text x="572" y="182" fill="#f3d19a" font-size="16" font-family="system-ui,sans-serif">second way</text>
+<rect x="296" y="300" width="388" height="120" fill="#121c30" stroke="#c5cdd8" stroke-width="3"/>
+<text x="312" y="350" fill="#d6deea" font-size="22" font-family="system-ui,sans-serif">Front of house: meeting place</text>
+<text x="312" y="386" fill="#9aacbf" font-size="16" font-family="system-ui,sans-serif">Stay out. Call 9-1-1.</text>
+<text x="40" y="140" fill="#d6deea" font-size="20" font-family="system-ui,sans-serif">One-story house</text>
+<text x="40" y="172" fill="#d6deea" font-size="20" font-family="system-ui,sans-serif">Ground-floor bedroom</text>
+<text x="40" y="500" fill="#9aacbf" font-size="18" font-family="system-ui,sans-serif">USFA: two ways out of every room. This is not your floor plan.</text>
+</svg>

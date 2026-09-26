@@ -111,7 +111,9 @@ export function buildLessonInterpretationPrompt(beatId: string, utterance: strin
     "Do not invent evacuation routes, rescue, or safety guarantees.",
     lessonId === "tornado-home-1"
       ? "This scene is a sturdy house with a basement. Do not treat mobile-home or vehicle actions as the same as this house."
-      : "Do not treat walking through flood water or a closed attic as recommended.",
+      : lessonId === "home-fire-1"
+        ? "This scene is a fictional one-story house with a ground-floor bedroom. Do not treat tornado basement sheltering, flood-water actions, or invented routes as recommended."
+        : "Do not treat walking through flood water or a closed attic as recommended.",
     "If the user asks for something not listed, do not silently remap it.",
     "The feedback field may only restate the learner's words. Do not add extra emergency advice there.",
   ].join(" ");

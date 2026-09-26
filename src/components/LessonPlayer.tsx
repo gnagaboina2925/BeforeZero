@@ -12,6 +12,7 @@ import { actionLabelFromBeats, getLesson, type PlatformLessonId } from "@/lib/le
 import { mediaIdForBeat, type LessonMediaManifest } from "@/lib/lesson/media";
 import hurricaneManifest from "@/lib/lesson/media-manifest.json";
 import tornadoManifest from "@/lib/lesson/tornado-media-manifest.json";
+import homeFireManifest from "@/lib/lesson/home-fire-media-manifest.json";
 import {
   beatDisplayText,
   createInitialLessonState,
@@ -31,6 +32,15 @@ function subscribeReducedMotion(onChange: () => void) {
 
 function readReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function subscribeMotionReady(onChange: () => void) {
+  const frame = window.requestAnimationFrame(() => onChange());
+  return () => window.cancelAnimationFrame(frame);
+}
+
+function readMotionReady(): boolean {
+  return true;
 }
 
 interface LessonProposal {
@@ -55,7 +65,13 @@ function userMediaNote(status: string | undefined): string | null {
 
 export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
   const lesson = getLesson(lessonId);
-  const manifest = (lessonId === "tornado-home-1" ? tornadoManifest : hurricaneManifest) as LessonMediaManifest;
+  const manifest = (
+    lessonId === "tornado-home-1"
+      ? tornadoManifest
+      : lessonId === "home-fire-1"
+        ? homeFireManifest
+        : hurricaneManifest
+  ) as LessonMediaManifest;
   const { prefs } = useAccessPreferences();
   const [state, dispatch] = useReducer(lessonReducer, lessonId, createInitialLessonState);
   const [utterance, setUtterance] = useState("");
@@ -65,10 +81,7 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
   const chapterListRef = useRef<HTMLDetailsElement | null>(null);
   const pauseMedia = useRef<() => void>(() => undefined);
   const systemReduceMotion = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false);
-  const [motionReady, setMotionReady] = useState(false);
-  useEffect(() => {
-    setMotionReady(true);
-  }, []);
+  const motionReady = useSyncExternalStore(subscribeMotionReady, readMotionReady, () => false);
   const reduceMotion =
     prefs.motion === "reduce" ||
     (motionReady && prefs.motion === "system" && systemReduceMotion);

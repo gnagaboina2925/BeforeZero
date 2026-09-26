@@ -3,6 +3,10 @@ import {
   TORNADO_BEATS,
   TORNADO_LESSON_ID,
 } from "./tornado.ts";
+import {
+  HOME_FIRE_BEATS,
+  HOME_FIRE_LESSON_ID,
+} from "./home-fire.ts";
 
 export const LESSON_SCENE_IDS = ["watch", "rain", "street", "interior", "flood"] as const;
 
@@ -50,12 +54,25 @@ export const TORNADO_SCENE_CLIP_SOURCE = {
   "tornado-shelter": "shelter",
 } as const;
 
+export const HOME_FIRE_IMAGINE_CLIP_IDS = ["room", "yard"] as const;
+export type HomeFireImagineClipId = (typeof HOME_FIRE_IMAGINE_CLIP_IDS)[number];
+
+export const HOME_FIRE_CLIP_PROMPTS: Record<HomeFireImagineClipId, string> = {
+  room: "Fictional practice illustration, not a real fire and not documentary footage. Dim ground-floor bedroom interior of a one-story house, closed bedroom door, window on one wall, navy and amber practical lighting, slow camera. No flames, no smoke filling the room, no people, no faces, no readable text, no maps, no exit signs, no tornado, no flood water.",
+  yard: "Fictional practice illustration, not a real fire. Night view of the front of a one-story house from across a small yard, porch light on, navy palette, slow camera. No flames, no fire trucks, no people, no readable address, no maps, no sirens, no flashing emergency lights.",
+};
+
+export const HOME_FIRE_SCENE_CLIP_SOURCE = {
+  "fire-room": "room",
+  "fire-outside": "yard",
+} as const;
+
 export interface LessonMediaAsset {
   video: string | null;
   audio: string | null;
   captions: string | null;
   still: string | null;
-  visualSource: ImagineClipId | TornadoImagineClipId;
+  visualSource: ImagineClipId | TornadoImagineClipId | HomeFireImagineClipId;
   muxStatus: "ready" | "audio-only" | "still-only" | "missing";
   narrationStatus: "current" | "stale" | "missing";
   narrationFingerprint: string | null;
@@ -112,11 +129,20 @@ export interface Cue {
   text: string;
 }
 
-export function narrationCues(text: string, durationSeconds: number): Cue[] {
-  const parts = text
+const ABBREVIATION_DOT = "\uE000";
+
+function splitNarrationSentences(text: string): string[] {
+  const protectedText = text
+    .replace(/\b(?:[A-Z]\.){2,}/g, (match) => match.replaceAll(".", ABBREVIATION_DOT))
+    .replace(/\b(?:Mrs|Ms|Mr|Dr|vs|etc)\./gi, (match) => match.replaceAll(".", ABBREVIATION_DOT));
+  return protectedText
     .split(/(?<=[.!?])\s+/)
-    .map((part) => part.trim())
+    .map((part) => part.replaceAll(ABBREVIATION_DOT, ".").trim())
     .filter(Boolean);
+}
+
+export function narrationCues(text: string, durationSeconds: number): Cue[] {
+  const parts = splitNarrationSentences(text);
   const totalChars = parts.reduce((sum, cue) => sum + cue.length, 0) || 1;
   let elapsed = 0;
   const cues: Cue[] = [];
@@ -162,6 +188,25 @@ function formatCueTime(seconds: number): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(whole).padStart(2, "0")}.${ms}`;
 }
 
+export function xmlSafeText(input: string): string {
+  let output = "";
+  for (const character of input) {
+    const code = character.codePointAt(0) ?? 0;
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) continue;
+    if (character === "&") output += "&amp;";
+    else if (character === "<") output += "&lt;";
+    else if (character === ">") output += "&gt;";
+    else if (character === '"') output += "&quot;";
+    else if (character === "'") output += "&apos;";
+    else output += character;
+  }
+  return output;
+}
+
+export function svgDocument(innerMarkup: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-hidden="true">\n${innerMarkup}\n</svg>\n`;
+}
+
 export function emptyTornadoMediaManifest(): LessonMediaManifest {
   return {
     lessonId: TORNADO_LESSON_ID,
@@ -191,6 +236,40 @@ export function emptyTornadoMediaManifest(): LessonMediaManifest {
           narrationStatus: "missing" as const,
           narrationFingerprint: narrationFingerprint(beat.narration),
           note: "On-screen teaching text is current. Tornado video and Grok Voice narration have not been generated.",
+        },
+      ]),
+    ),
+  };
+}
+
+export function homeFireStillForScene(scene: string): string {
+  if (scene === "fire-outside") return "stills/yard.svg";
+  return "stills/room.svg";
+}
+
+export function emptyHomeFireMediaManifest(): LessonMediaManifest {
+  return {
+    lessonId: HOME_FIRE_LESSON_ID,
+    videoModel: VIDEO_MODEL,
+    videoStatus: "not-generated",
+    generatedAt: null,
+    clips: {
+      room: { requestId: null, sourceFile: null, stillFile: "stills/room.svg", status: "missing", diagnostic: null },
+      yard: { requestId: null, sourceFile: null, stillFile: "stills/yard.svg", status: "missing", diagnostic: null },
+    },
+    beats: Object.fromEntries(
+      HOME_FIRE_BEATS.map((beat) => [
+        beat.id,
+        {
+          video: null,
+          audio: null,
+          captions: `captions/${beat.id}.vtt`,
+          still: beat.overlay === "none" ? homeFireStillForScene(beat.scene) : "stills/escape-plan.svg",
+          visualSource: HOME_FIRE_SCENE_CLIP_SOURCE[beat.scene === "fire-outside" ? "fire-outside" : "fire-room"],
+          muxStatus: "still-only" as const,
+          narrationStatus: "missing" as const,
+          narrationFingerprint: narrationFingerprint(beat.narration),
+          note: "On-screen teaching text is current. Home-fire video and Grok Voice narration have not been generated.",
         },
       ]),
     ),
