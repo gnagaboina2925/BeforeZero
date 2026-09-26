@@ -25,7 +25,7 @@ export function HomeLanding() {
         </li>
         <li>
           <h2 className="section-heading">Practice</h2>
-          <p className="result-body">A hurricane lesson that teaches, demonstrates, then optionally practices decisions.</p>
+          <p className="result-body">Captioned hurricane and tornado lessons that teach, then optionally practice decisions.</p>
           <Link className="btn-primary" href="/practice">
             Start practice
           </Link>

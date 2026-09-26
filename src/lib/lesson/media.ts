@@ -1,4 +1,8 @@
-import { LESSON_BEATS, type LessonSceneId } from "./catalog.ts";
+import { LESSON_BEATS, type HurricaneSceneId, type LessonSceneId } from "./catalog.ts";
+import {
+  TORNADO_BEATS,
+  TORNADO_LESSON_ID,
+} from "./tornado.ts";
 
 export const LESSON_SCENE_IDS = ["watch", "rain", "street", "interior", "flood"] as const;
 
@@ -6,7 +10,7 @@ export const LESSON_SCENE_IDS = ["watch", "rain", "street", "interior", "flood"]
 export const IMAGINE_CLIP_IDS = ["watch", "street", "flood", "interior"] as const;
 export type ImagineClipId = (typeof IMAGINE_CLIP_IDS)[number];
 
-export const SCENE_CLIP_SOURCE: Record<LessonSceneId, ImagineClipId> = {
+export const SCENE_CLIP_SOURCE: Record<HurricaneSceneId, ImagineClipId> = {
   watch: "watch",
   rain: "street",
   street: "street",
@@ -32,12 +36,26 @@ export const CLIP_PROMPTS: Record<ImagineClipId, string> = {
     "Fictional practice illustration, not a real storm. Dim interior stairwell going upward, rain light from a window, navy palette, slow camera. No people, no exit signs, no floor numbers, no readable text, no maps, no evacuation arrows.",
 };
 
+export const TORNADO_IMAGINE_CLIP_IDS = ["sky", "shelter"] as const;
+export type TornadoImagineClipId = (typeof TORNADO_IMAGINE_CLIP_IDS)[number];
+
+export const TORNADO_CLIP_PROMPTS: Record<TornadoImagineClipId, string> = {
+  sky: "Fictional practice illustration, not a real tornado and not documentary footage. View from inside a sturdy site-built house toward a dark overcast sky through a closed window. No flood water, no street flooding, no mobile home, no vehicle, no people, no faces, no readable text, no maps, no sirens, no flashing lights.",
+  shelter:
+    "Fictional practice illustration, not a real tornado. Windowless interior hallway of a sturdy house on a lowest floor, closed bathroom door, dim practical lighting, navy palette, slow camera. No flood water, no attic, no people, no exit signs, no readable text, no maps.",
+};
+
+export const TORNADO_SCENE_CLIP_SOURCE = {
+  "tornado-sky": "sky",
+  "tornado-shelter": "shelter",
+} as const;
+
 export interface LessonMediaAsset {
   video: string | null;
   audio: string | null;
   captions: string | null;
   still: string | null;
-  visualSource: ImagineClipId;
+  visualSource: ImagineClipId | TornadoImagineClipId;
   muxStatus: "ready" | "audio-only" | "still-only" | "missing";
   narrationStatus: "current" | "stale" | "missing";
   narrationFingerprint: string | null;
@@ -50,7 +68,7 @@ export interface LessonMediaManifest {
   videoStatus: "not-generated" | "partial" | "ready";
   generatedAt: string | null;
   clips: Record<
-    ImagineClipId,
+    string,
     {
       requestId: string | null;
       sourceFile: string | null;
@@ -76,16 +94,16 @@ export function narrationFingerprint(text: string): string {
   return (hash >>> 0).toString(16);
 }
 
-export function narrationClips(): NarrationClip[] {
-  return LESSON_BEATS.filter((beat) => beat.narration.trim()).map((beat) => ({
+export function narrationClips(beats = LESSON_BEATS): NarrationClip[] {
+  return beats.filter((beat) => beat.narration.trim()).map((beat) => ({
     id: beat.id,
     text: beat.narration,
     scene: beat.scene,
   }));
 }
 
-export function mediaIdForBeat(beatId: string): string {
-  return LESSON_BEATS.some((beat) => beat.id === beatId) ? beatId : "intro";
+export function mediaIdForBeat(beatId: string, beats = LESSON_BEATS): string {
+  return beats.some((beat) => beat.id === beatId) ? beatId : beats[0]?.id ?? "intro";
 }
 
 export interface Cue {
@@ -142,6 +160,41 @@ function formatCueTime(seconds: number): string {
     .toString()
     .padStart(3, "0");
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(whole).padStart(2, "0")}.${ms}`;
+}
+
+export function emptyTornadoMediaManifest(): LessonMediaManifest {
+  return {
+    lessonId: TORNADO_LESSON_ID,
+    videoModel: VIDEO_MODEL,
+    videoStatus: "not-generated",
+    generatedAt: null,
+    clips: {
+      sky: { requestId: null, sourceFile: null, stillFile: "stills/sky.svg", status: "missing", diagnostic: null },
+      shelter: {
+        requestId: null,
+        sourceFile: null,
+        stillFile: "stills/shelter.svg",
+        status: "missing",
+        diagnostic: null,
+      },
+    },
+    beats: Object.fromEntries(
+      TORNADO_BEATS.map((beat) => [
+        beat.id,
+        {
+          video: null,
+          audio: null,
+          captions: `captions/${beat.id}.vtt`,
+          still: beat.scene === "tornado-sky" ? "stills/sky.svg" : "stills/shelter.svg",
+          visualSource: TORNADO_SCENE_CLIP_SOURCE[beat.scene === "tornado-sky" ? "tornado-sky" : "tornado-shelter"],
+          muxStatus: "still-only" as const,
+          narrationStatus: "missing" as const,
+          narrationFingerprint: narrationFingerprint(beat.narration),
+          note: "On-screen teaching text is current. Tornado video and Grok Voice narration have not been generated.",
+        },
+      ]),
+    ),
+  };
 }
 
 export function emptyLessonMediaManifest(): LessonMediaManifest {

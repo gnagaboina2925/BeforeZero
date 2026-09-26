@@ -1,0 +1,112 @@
+{
+  "lessonId": "tornado-home-1",
+  "videoModel": "grok-imagine-video-1.5",
+  "videoStatus": "ready",
+  "generatedAt": "2026-09-26T17:44:08.248Z",
+  "clips": {
+    "sky": {
+      "requestId": "5f726a11-1ef4-96e2-91f6-7b5380e2c659",
+      "sourceFile": "source/sky.mp4",
+      "stillFile": "stills/sky.svg",
+      "status": "saved",
+      "diagnostic": null
+    },
+    "shelter": {
+      "requestId": "5158dc69-b9fb-91bf-920f-1c9b8ad94bc6",
+      "sourceFile": "source/shelter.mp4",
+      "stillFile": "stills/shelter.svg",
+      "status": "saved",
+      "diagnostic": null
+    }
+  },
+  "beats": {
+    "tornado-intro": {
+      "video": "muxed/tornado-intro.mp4",
+      "audio": "audio/tornado-intro.mp3",
+      "captions": "captions/tornado-intro.vtt",
+      "still": "stills/sky.svg",
+      "visualSource": "sky",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "71d8fcfa",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    },
+    "tornado-watch-warning": {
+      "video": "muxed/tornado-watch-warning.mp4",
+      "audio": "audio/tornado-watch-warning.mp3",
+      "captions": "captions/tornado-watch-warning.vtt",
+      "still": "stills/sky.svg",
+      "visualSource": "sky",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f5c5507f",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    },
+    "tornado-shelter-plan": {
+      "video": "muxed/tornado-shelter-plan.mp4",
+      "audio": "audio/tornado-shelter-plan.mp3",
+      "captions": "captions/tornado-shelter-plan.vtt",
+      "still": "stills/shelter.svg",
+      "visualSource": "shelter",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "3a2d496f",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    },
+    "tornado-warning-home": {
+      "video": "muxed/tornado-warning-home.mp4",
+      "audio": "audio/tornado-warning-home.mp3",
+      "captions": "captions/tornado-warning-home.vtt",
+      "still": "stills/shelter.svg",
+      "visualSource": "shelter",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "ff4a5b59",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    },
+    "tornado-demo-shelter": {
+      "video": null,
+      "audio": "audio/tornado-demo-shelter.mp3",
+      "captions": "captions/tornado-demo-shelter.vtt",
+      "still": "stills/shelter.svg",
+      "visualSource": "shelter",
+      "muxStatus": "audio-only",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f7663434",
+      "note": "Current narration is available. The labeled shelter diagram is the instructional visual. Generated footage is illustrative only."
+    },
+    "tornado-warning-decision": {
+      "video": null,
+      "audio": "audio/tornado-warning-decision.mp3",
+      "captions": "captions/tornado-warning-decision.vtt",
+      "still": "stills/shelter.svg",
+      "visualSource": "shelter",
+      "muxStatus": "audio-only",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f1faa06c",
+      "note": "Current narration is available. The labeled shelter diagram is the instructional visual. Generated footage is illustrative only."
+    },
+    "tornado-access": {
+      "video": "muxed/tornado-access.mp4",
+      "audio": "audio/tornado-access.mp3",
+      "captions": "captions/tornado-access.vtt",
+      "still": "stills/shelter.svg",
+      "visualSource": "shelter",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "c3426383",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    },
+    "tornado-debrief": {
+      "video": "muxed/tornado-debrief.mp4",
+      "audio": "audio/tornado-debrief.mp3",
+      "captions": "captions/tornado-debrief.vtt",
+      "still": "stills/sky.svg",
+      "visualSource": "sky",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "94d0aad6",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram."
+    }
+  }
+}

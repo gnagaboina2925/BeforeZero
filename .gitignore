@@ -33,6 +33,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Lesson generation working files (keep local; needed for remux)
+public/lesson/jobs.json
+public/lesson/source/
+public/lesson/narration-hashes.json
+public/lesson/tornado/jobs.json
+public/lesson/tornado/source/
+public/lesson/tornado/narration-hashes.json
+
 # vercel
 .vercel
 

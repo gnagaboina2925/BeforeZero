@@ -18,6 +18,8 @@ export function LessonOverlay({
       {overlay === "alert-card" ? <AlertCardOverlay /> : null}
       {overlay === "flooded-road" ? <FloodedRoadOverlay /> : null}
       {overlay === "building-cutaway" ? <BuildingCutawayOverlay /> : null}
+      {overlay === "tornado-alert-card" ? <TornadoAlertOverlay /> : null}
+      {overlay === "tornado-home-shelter" ? <TornadoHomeShelterOverlay /> : null}
       <p className="sr-only">{description}</p>
     </div>
   );
@@ -102,6 +104,81 @@ function BuildingCutawayOverlay() {
       </text>
       <text x="20" y="250" fill="#9aacbf" fontSize="12">
         Stairs may be inaccessible. Plan assistance before a storm.
+      </text>
+    </svg>
+  );
+}
+
+function TornadoAlertOverlay() {
+  return (
+    <svg className="lesson-overlay-svg" viewBox="0 0 640 280" role="img" aria-hidden="true">
+      <rect x="24" y="20" width="592" height="240" rx="12" fill="#071018" stroke="#9aacbf" strokeWidth="2" />
+      <text x="40" y="48" fill="#f3d19a" fontSize="13">
+        Practice card — not a live alert. Words matter more than color or sound.
+      </text>
+      <rect x="40" y="70" width="268" height="168" rx="8" fill="#121c30" stroke="#c5cdd8" strokeWidth="2" />
+      <text x="56" y="100" fill="#f4f0e6" fontSize="18">
+        Tornado Watch
+      </text>
+      <text x="56" y="128" fill="#f3d19a" fontSize="16">
+        Be prepared
+      </text>
+      <text x="56" y="158" fill="#c5cdd8" fontSize="14">
+        Tornadoes are possible.
+      </text>
+      <text x="56" y="182" fill="#c5cdd8" fontSize="14">
+        Review your plan.
+      </text>
+      <rect x="332" y="70" width="268" height="168" rx="8" fill="#121c30" stroke="#e8b86d" strokeWidth="2" />
+      <text x="348" y="100" fill="#f4f0e6" fontSize="18">
+        Tornado Warning
+      </text>
+      <text x="348" y="128" fill="#f3d19a" fontSize="16">
+        Take action
+      </text>
+      <text x="348" y="158" fill="#c5cdd8" fontSize="14">
+        Sighted or shown on radar.
+      </text>
+      <text x="348" y="182" fill="#c5cdd8" fontSize="14">
+        Go to shelter now.
+      </text>
+    </svg>
+  );
+}
+
+function TornadoHomeShelterOverlay() {
+  return (
+    <svg className="lesson-overlay-svg" viewBox="0 0 640 280" role="img" aria-hidden="true">
+      <text x="16" y="28" fill="#f3d19a" fontSize="13">
+        Conceptual sturdy house — not a real floor plan, not a mobile home, not a vehicle
+      </text>
+      <rect x="200" y="44" width="280" height="210" fill="#0b1220" stroke="#9aacbf" strokeWidth="2" />
+      <rect x="208" y="52" width="264" height="52" fill="#2a1a1a" />
+      <text x="220" y="84" fill="#c5cdd8" fontSize="13">
+        Upper floor with windows — avoid windows
+      </text>
+      <rect x="208" y="108" width="264" height="52" fill="#132033" />
+      <text x="220" y="140" fill="#c5cdd8" fontSize="13">
+        Main floor — not the first choice here
+      </text>
+      <rect x="208" y="164" width="264" height="80" fill="#1c2b22" stroke="#e8b86d" strokeWidth="3" />
+      <text x="220" y="196" fill="#f3d19a" fontSize="15">
+        Interior basement — go here
+      </text>
+      <text x="220" y="218" fill="#f3d19a" fontSize="13">
+        Away from windows
+      </text>
+      <text x="16" y="70" fill="#d6deea" fontSize="13">
+        Setting:
+      </text>
+      <text x="16" y="92" fill="#d6deea" fontSize="13">
+        sturdy house
+      </text>
+      <text x="16" y="114" fill="#d6deea" fontSize="13">
+        with a basement
+      </text>
+      <text x="16" y="250" fill="#9aacbf" fontSize="12">
+        Stairs may be inaccessible. See the access step for sourced wheelchair and limited-mobility notes.
       </text>
     </svg>
   );

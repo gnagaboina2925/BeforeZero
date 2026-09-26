@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BeforeZero — Practice before it matters.",
   description:
-    "Learn from past storms, practice a captioned hurricane lesson, and read official weather alerts.",
+    "Learn from past storms, practice captioned hurricane and tornado lessons, and read official weather alerts.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

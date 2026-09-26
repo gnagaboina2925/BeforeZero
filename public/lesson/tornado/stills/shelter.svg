@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-hidden="true">
+  <rect width="960" height="540" fill="#071018"/>
+  <text x="40" y="48" fill="#f3d19a" font-size="20" font-family="system-ui,sans-serif">Labeled diagram  not a real house, not a mobile home, not a vehicle</text>
+  <rect x="280" y="80" width="420" height="400" fill="#0b1220" stroke="#9aacbf" stroke-width="3"/>
+  <rect x="296" y="100" width="388" height="90" fill="#2a1a1a"/>
+  <text x="312" y="154" fill="#c5cdd8" font-size="22" font-family="system-ui,sans-serif">Windows  avoid</text>
+  <rect x="296" y="200" width="388" height="90" fill="#132033"/>
+  <text x="312" y="254" fill="#c5cdd8" font-size="22" font-family="system-ui,sans-serif">Main floor</text>
+  <rect x="296" y="300" width="388" height="160" fill="#1c2b22" stroke="#e8b86d" stroke-width="4"/>
+  <text x="312" y="360" fill="#f3d19a" font-size="26" font-family="system-ui,sans-serif">Interior basement  go here</text>
+  <text x="312" y="400" fill="#f3d19a" font-size="20" font-family="system-ui,sans-serif">Away from windows</text>
+  <text x="40" y="140" fill="#d6deea" font-size="20" font-family="system-ui,sans-serif">Sturdy house</text>
+  <text x="40" y="172" fill="#d6deea" font-size="20" font-family="system-ui,sans-serif">with a basement</text>
+  <text x="40" y="500" fill="#9aacbf" font-size="18" font-family="system-ui,sans-serif">NWS: basement or interior room away from windows. Stairs may be inaccessible.</text>
+</svg>

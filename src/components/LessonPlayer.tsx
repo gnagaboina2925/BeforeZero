@@ -4,17 +4,14 @@ import { useAccessPreferences } from "@/components/AccessProvider";
 import { LessonStage } from "@/components/LessonStage";
 import { SpeakAnswer } from "@/components/SpeakAnswer";
 import {
-  ACCESS_PREP_NOTE,
-  LESSON_SOURCE_LINKS,
-  LESSON_TAKEAWAYS,
-  PREPARE_CHECKLIST,
-  actionLabel,
   conditionLabel,
   type LessonActionId,
   type LessonBeat,
 } from "@/lib/lesson/catalog";
-import mediaManifest from "@/lib/lesson/media-manifest.json";
+import { actionLabelFromBeats, getLesson, type PlatformLessonId } from "@/lib/lesson/lessons";
 import { mediaIdForBeat, type LessonMediaManifest } from "@/lib/lesson/media";
+import hurricaneManifest from "@/lib/lesson/media-manifest.json";
+import tornadoManifest from "@/lib/lesson/tornado-media-manifest.json";
 import {
   beatDisplayText,
   createInitialLessonState,
@@ -25,9 +22,6 @@ import {
 } from "@/lib/lesson/player";
 import { MAX_TYPED_ANSWER_LENGTH, type InterpretError } from "@/lib/types";
 import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
-
-const MANIFEST = mediaManifest as LessonMediaManifest;
-const PREVIEW_STILL = "/lesson/stills/watch.jpg";
 
 function subscribeReducedMotion(onChange: () => void) {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -59,9 +53,11 @@ function userMediaNote(status: string | undefined): string | null {
   return "Updated narration is being prepared. Text guidance is available.";
 }
 
-export function LessonPlayer() {
+export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
+  const lesson = getLesson(lessonId);
+  const manifest = (lessonId === "tornado-home-1" ? tornadoManifest : hurricaneManifest) as LessonMediaManifest;
   const { prefs } = useAccessPreferences();
-  const [state, dispatch] = useReducer(lessonReducer, undefined, createInitialLessonState);
+  const [state, dispatch] = useReducer(lessonReducer, lessonId, createInitialLessonState);
   const [utterance, setUtterance] = useState("");
   const [proposal, setProposal] = useState<LessonProposal | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +65,17 @@ export function LessonPlayer() {
   const chapterListRef = useRef<HTMLDetailsElement | null>(null);
   const pauseMedia = useRef<() => void>(() => undefined);
   const systemReduceMotion = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false);
-  const reduceMotion = prefs.motion === "reduce" || (prefs.motion === "system" && systemReduceMotion);
+  const [motionReady, setMotionReady] = useState(false);
+  useEffect(() => {
+    setMotionReady(true);
+  }, []);
+  const reduceMotion =
+    prefs.motion === "reduce" ||
+    (motionReady && prefs.motion === "system" && systemReduceMotion);
   const beat = currentBeat(state);
   const copy = beatDisplayText(state);
-  const mediaId = beat ? mediaIdForBeat(beat.id) : "intro";
-  const media = MANIFEST.beats[mediaId];
+  const mediaId = beat ? mediaIdForBeat(beat.id, lesson.beats) : lesson.beats[0]?.id;
+  const media = mediaId ? manifest.beats[mediaId] : undefined;
   const beats = lessonBeats(state);
   const feedback = beat ? state.feedback[beat.id] : undefined;
   const overlay = overlayForState(state);
@@ -102,7 +104,7 @@ export function LessonPlayer() {
       const response = await fetch("/api/lesson/interpret", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ utterance: text, beatId: beat.id }),
+        body: JSON.stringify({ utterance: text, beatId: beat.id, lessonId }),
       });
       const payload = (await response.json()) as LessonProposal | { error?: InterpretError };
       if (!response.ok || !("proposedActionIds" in payload)) {
@@ -138,11 +140,11 @@ export function LessonPlayer() {
       <section className="practice-landing" aria-labelledby="lesson-start-heading">
         <div className="practice-hero">
           <div className="practice-hero-copy">
-            <p className="kicker">Guided emergency training</p>
+            <p className="kicker">{lesson.kicker}</p>
             <h1 id="lesson-start-heading" className="practice-heading">
-              Know what to do before the storm.
+              {lesson.heading}
             </h1>
-            <p className="practice-lede">Watch clear demonstrations, hear each step, and practice at your pace.</p>
+            <p className="practice-lede">{lesson.lede}</p>
             <div className="action-row">
               <button type="button" className="btn-primary" onClick={startGuided}>
                 Start guided lesson
@@ -158,30 +160,24 @@ export function LessonPlayer() {
           </div>
           <figure className="practice-preview">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={PREVIEW_STILL} alt="" />
+            <img src={lesson.previewStill} alt="" />
             <button type="button" className="practice-preview-play" onClick={startGuided}>
               <PlayIcon />
               Start guided lesson
             </button>
             <figcaption>
-              <strong>Hurricane, heavy rain &amp; flooding</strong>
-              <span>Illustrative training scene</span>
+              <strong>{lesson.previewCaption}</strong>
+              <span>{lesson.previewNote}</span>
             </figcaption>
           </figure>
         </div>
         <ul className="practice-objectives">
-          <li>
-            <span className="practice-objective-label">01</span>
-            Prepare before the storm
-          </li>
-          <li>
-            <span className="practice-objective-label">02</span>
-            Understand sheltering instructions
-          </li>
-          <li>
-            <span className="practice-objective-label">03</span>
-            Respond to flooding
-          </li>
+          {lesson.objectives.map((item, index) => (
+            <li key={item}>
+              <span className="practice-objective-label">{String(index + 1).padStart(2, "0")}</span>
+              {item}
+            </li>
+          ))}
         </ul>
         <ul className="practice-features">
           <li>
@@ -244,6 +240,7 @@ export function LessonPlayer() {
             showCaptions={prefs.captions}
             reduceMotion={reduceMotion}
             autoPlay={!reduceMotion && media?.narrationStatus === "current"}
+            mediaBasePath={lesson.mediaBasePath}
             onPauseRequest={(pause) => {
               pauseMedia.current = pause;
             }}
@@ -413,7 +410,7 @@ export function LessonPlayer() {
       {beat.kind === "debrief" ? (
         <>
           <div className="sim-card no-print">
-            <DebriefContent decisions={state.decisions} />
+            <DebriefContent lessonId={lessonId} decisions={state.decisions} />
             <div className="action-row">
               <button
                 type="button"
@@ -442,16 +439,16 @@ export function LessonPlayer() {
           </div>
           <section className="print-card print-only" aria-label="Lesson notes">
             <p className="print-kicker">BeforeZero</p>
-            <h1>Hurricane and heavy rain</h1>
-            <DebriefContent decisions={state.decisions} print />
+            <h1>{lesson.printTitle}</h1>
+            <DebriefContent lessonId={lessonId} decisions={state.decisions} print />
           </section>
         </>
       ) : (
         <details className="lesson-sources">
           <summary>Sources and access notes</summary>
-          <p>{ACCESS_PREP_NOTE.text}</p>
+          <p>{lesson.accessNote.text}</p>
           <ul className="resource-list">
-            {LESSON_SOURCE_LINKS.map((item) => (
+            {lesson.sourceLinks.map((item) => (
               <li key={item.url}>
                 <a className="resource-link" href={item.url} rel="noopener noreferrer" target="_blank">
                   {item.title}
@@ -466,12 +463,15 @@ export function LessonPlayer() {
 }
 
 function DebriefContent({
+  lessonId,
   decisions,
   print = false,
 }: {
+  lessonId: PlatformLessonId;
   decisions: Partial<Record<string, LessonActionId>>;
   print?: boolean;
 }) {
+  const lesson = getLesson(lessonId);
   const titleClass = print ? undefined : "section-heading";
   const bodyClass = print ? undefined : "result-body";
   const practiced = Object.entries(decisions);
@@ -479,7 +479,7 @@ function DebriefContent({
     <>
       <h2 className={titleClass}>What you learned</h2>
       <ol>
-        {LESSON_TAKEAWAYS.map((item) => (
+        {lesson.takeaways.map((item) => (
           <li key={item} className={bodyClass}>
             {item}
           </li>
@@ -492,7 +492,7 @@ function DebriefContent({
             {practiced.map(([beatId, actionId]) =>
               actionId ? (
                 <li key={beatId} className={bodyClass}>
-                  {actionLabel(actionId)}
+                  {actionLabelFromBeats(lesson.beats, actionId)}
                 </li>
               ) : null,
             )}
@@ -501,19 +501,19 @@ function DebriefContent({
       ) : (
         <p className={bodyClass}>You watched the guided lesson. Practice questions were not required.</p>
       )}
-      <h2 className={titleClass}>Prepare before a storm</h2>
+      <h2 className={titleClass}>{lesson.prepareHeading}</h2>
       <ul>
-        {PREPARE_CHECKLIST.map((item) => (
+        {lesson.prepareChecklist.map((item) => (
           <li key={item.text} className={bodyClass}>
             {item.text}
           </li>
         ))}
       </ul>
-      <p className={print ? undefined : "result-note"}>{ACCESS_PREP_NOTE.text}</p>
+      <p className={print ? undefined : "result-note"}>{lesson.accessNote.text}</p>
       <h2 className={titleClass}>Sources and further reading</h2>
       <p className={bodyClass}>These links support the teaching above. They are not a substitute for it.</p>
       <ul className={print ? undefined : "resource-list"}>
-        {LESSON_SOURCE_LINKS.map((item) => (
+        {lesson.sourceLinks.map((item) => (
           <li key={item.url}>
             <a className="resource-link" href={item.url} rel="noopener noreferrer" target="_blank">
               {item.title}

@@ -1,15 +1,15 @@
 import {
-  beatsForMode,
-  practiceFeedback,
   type LessonActionId,
   type LessonBeat,
   type LessonOverlayId,
   type PracticeFeedback,
 } from "./catalog.ts";
+import { getLesson, type PlatformLessonId } from "./lessons.ts";
 
 export type LessonMode = "guided" | "practice";
 
 export interface LessonState {
+  lessonId: PlatformLessonId;
   mode: LessonMode | null;
   beatIndex: number;
   started: boolean;
@@ -26,8 +26,9 @@ export type LessonEvent =
   | { type: "RETRY_DECISION" }
   | { type: "RESTART" };
 
-export function createInitialLessonState(): LessonState {
+export function createInitialLessonState(lessonId: PlatformLessonId = "hurricane-flood-1"): LessonState {
   return {
+    lessonId,
     mode: null,
     beatIndex: 0,
     started: false,
@@ -38,7 +39,7 @@ export function createInitialLessonState(): LessonState {
 
 export function lessonBeats(state: LessonState): LessonBeat[] {
   if (!state.mode) return [];
-  return beatsForMode(state.mode);
+  return getLesson(state.lessonId).beatsForMode(state.mode);
 }
 
 export function currentBeat(state: LessonState): LessonBeat | undefined {
@@ -48,9 +49,9 @@ export function currentBeat(state: LessonState): LessonBeat | undefined {
 export function lessonReducer(state: LessonState, event: LessonEvent): LessonState {
   switch (event.type) {
     case "RESTART":
-      return createInitialLessonState();
+      return createInitialLessonState(state.lessonId);
     case "START":
-      return { ...createInitialLessonState(), started: true, mode: event.mode, beatIndex: 0 };
+      return { ...createInitialLessonState(state.lessonId), started: true, mode: event.mode, beatIndex: 0 };
     case "PREV": {
       if (!state.started) return state;
       return { ...state, beatIndex: Math.max(0, state.beatIndex - 1) };
@@ -82,7 +83,7 @@ export function lessonReducer(state: LessonState, event: LessonEvent): LessonSta
       return {
         ...state,
         decisions: { ...state.decisions, [beat.id]: event.actionId },
-        feedback: { ...state.feedback, [beat.id]: practiceFeedback(beat.id, event.actionId) },
+        feedback: { ...state.feedback, [beat.id]: getLesson(state.lessonId).practiceFeedback(beat.id, event.actionId) },
       };
     }
     case "RETRY_DECISION": {

@@ -5,6 +5,9 @@ import {
   CLIP_PROMPTS,
   IMAGINE_CLIP_IDS,
   SCENE_CLIP_SOURCE,
+  TORNADO_CLIP_PROMPTS,
+  TORNADO_IMAGINE_CLIP_IDS,
+  TORNADO_SCENE_CLIP_SOURCE,
   VIDEO_ASPECT_RATIO,
   VIDEO_DURATION_SECONDS,
   VIDEO_GENERATIONS_URL,
@@ -12,11 +15,15 @@ import {
   VIDEO_RESOLUTION,
   VIDEO_STATUS_URL,
   emptyLessonMediaManifest,
+  emptyTornadoMediaManifest,
   narrationClips,
   narrationFingerprint,
   vttFromNarration,
   type ImagineClipId,
+  type TornadoImagineClipId,
 } from "../src/lib/lesson/media.ts";
+import type { HurricaneSceneId } from "../src/lib/lesson/catalog.ts";
+import { TORNADO_BEATS, TORNADO_LESSON_ID } from "../src/lib/lesson/tornado.ts";
 import { TTS_URL, ttsVoice } from "../src/lib/voice.ts";
 
 const ROOT = process.cwd();
@@ -30,6 +37,14 @@ const PUBLIC_MANIFEST = path.join(LESSON_DIR, "manifest.json");
 const SRC_MANIFEST = path.join(ROOT, "src", "lib", "lesson", "media-manifest.json");
 const JOBS_PATH = path.join(LESSON_DIR, "jobs.json");
 const HASH_PATH = path.join(LESSON_DIR, "narration-hashes.json");
+const TORNADO_DIR = path.join(LESSON_DIR, "tornado");
+const TORNADO_SOURCE_DIR = path.join(TORNADO_DIR, "source");
+const TORNADO_AUDIO_DIR = path.join(TORNADO_DIR, "audio");
+const TORNADO_MUX_DIR = path.join(TORNADO_DIR, "muxed");
+const TORNADO_CAPTION_DIR = path.join(TORNADO_DIR, "captions");
+const TORNADO_JOBS_PATH = path.join(TORNADO_DIR, "jobs.json");
+const TORNADO_HASH_PATH = path.join(TORNADO_DIR, "narration-hashes.json");
+const TORNADO_DIAGRAM_BEATS = new Set(["tornado-demo-shelter", "tornado-warning-decision"]);
 const FFMPEG = "/opt/homebrew/bin/ffmpeg";
 const FFPROBE = "/opt/homebrew/bin/ffprobe";
 
@@ -41,6 +56,7 @@ interface JobRecord {
 }
 
 type JobFile = Record<ImagineClipId, JobRecord>;
+type TornadoJobFile = Record<TornadoImagineClipId, JobRecord>;
 
 function loadEnvLocal(): void {
   const envPath = path.join(ROOT, ".env.local");
@@ -85,6 +101,41 @@ function readJobs(): JobFile {
 
 function writeJobs(jobs: JobFile): void {
   writeFileSync(JOBS_PATH, `${JSON.stringify(jobs, null, 2)}\n`);
+}
+
+function emptyTornadoJobs(): TornadoJobFile {
+  return {
+    sky: { requestId: null, status: "missing", diagnostic: null, sourceFile: null },
+    shelter: { requestId: null, status: "missing", diagnostic: null, sourceFile: null },
+  };
+}
+
+function readTornadoJobs(): TornadoJobFile {
+  if (!existsSync(TORNADO_JOBS_PATH)) return emptyTornadoJobs();
+  try {
+    const parsed = JSON.parse(readFileSync(TORNADO_JOBS_PATH, "utf8")) as Partial<TornadoJobFile>;
+    return { ...emptyTornadoJobs(), ...parsed };
+  } catch {
+    return emptyTornadoJobs();
+  }
+}
+
+function writeTornadoJobs(jobs: TornadoJobFile): void {
+  writeFileSync(TORNADO_JOBS_PATH, `${JSON.stringify(jobs, null, 2)}\n`);
+}
+
+function readTornadoHashes(): Record<string, string> {
+  if (!existsSync(TORNADO_HASH_PATH)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(TORNADO_HASH_PATH, "utf8")) as Record<string, string>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeTornadoHashes(hashes: Record<string, string>): void {
+  writeFileSync(TORNADO_HASH_PATH, `${JSON.stringify(hashes, null, 2)}\n`);
 }
 
 function readHashes(): Record<string, string> {
@@ -219,7 +270,7 @@ function muxNarration(sourcePath: string, audioPath: string, outputPath: string,
   return existsSync(outputPath);
 }
 
-async function startGeneration(apiKey: string, clipId: ImagineClipId): Promise<{ requestId: string } | { diagnostic: string }> {
+async function startGeneration(apiKey: string, prompt: string): Promise<{ requestId: string } | { diagnostic: string }> {
   const response = await fetch(VIDEO_GENERATIONS_URL, {
     method: "POST",
     headers: {
@@ -228,7 +279,7 @@ async function startGeneration(apiKey: string, clipId: ImagineClipId): Promise<{
     },
     body: JSON.stringify({
       model: VIDEO_MODEL,
-      prompt: CLIP_PROMPTS[clipId],
+      prompt,
       duration: VIDEO_DURATION_SECONDS,
       aspect_ratio: VIDEO_ASPECT_RATIO,
       resolution: VIDEO_RESOLUTION,
@@ -340,7 +391,7 @@ async function generateClip(apiKey: string, clipId: ImagineClipId, jobs: JobFile
   let requestId = jobs[clipId].requestId;
   if (!requestId) {
     console.log(`Submitting Imagine job for ${clipId}…`);
-    const started = await startGeneration(apiKey, clipId);
+    const started = await startGeneration(apiKey, CLIP_PROMPTS[clipId]);
     if ("diagnostic" in started) {
       jobs[clipId] = { requestId: null, status: "failed", diagnostic: started.diagnostic, sourceFile: null };
       writeJobs(jobs);
@@ -369,9 +420,10 @@ async function generateNarration(
   id: string,
   text: string,
   force: boolean,
+  lessonDir = LESSON_DIR,
 ): Promise<string | null> {
   const audioRel = `audio/${id}.mp3`;
-  const audioPath = path.join(LESSON_DIR, audioRel);
+  const audioPath = path.join(lessonDir, audioRel);
   if (existsSync(audioPath) && !force) {
     console.log(`Skipping TTS for ${id}; audio already exists.`);
     return audioRel;
@@ -422,7 +474,7 @@ function writeManifest(jobs: JobFile, hashes: Record<string, string>): void {
     if (job.status === "saved") savedCount += 1;
   }
   for (const clip of narrationClips()) {
-    const visual = SCENE_CLIP_SOURCE[clip.scene];
+    const visual = hurricaneVisual(clip.scene);
     const audioRel = existsSync(path.join(AUDIO_DIR, `${clip.id}.mp3`)) ? `audio/${clip.id}.mp3` : null;
     const muxRel = existsSync(path.join(MUX_DIR, `${clip.id}.mp4`)) ? `muxed/${clip.id}.mp4` : null;
     const captionRel = existsSync(path.join(CAPTION_DIR, `${clip.id}.vtt`)) ? `captions/${clip.id}.vtt` : null;
@@ -468,8 +520,305 @@ function writeManifest(jobs: JobFile, hashes: Record<string, string>): void {
   writeFileSync(SRC_MANIFEST, json);
 }
 
+function hurricaneVisual(scene: string): ImagineClipId {
+  if (scene in SCENE_CLIP_SOURCE) return SCENE_CLIP_SOURCE[scene as HurricaneSceneId];
+  return "watch";
+}
+
+function selectedLessonId(): string {
+  const index = process.argv.indexOf("--lesson");
+  const value = index >= 0 ? process.argv[index + 1] : "hurricane-flood-1";
+  if (value === "tornado" || value === "tornado-home-1") return TORNADO_LESSON_ID;
+  return "hurricane-flood-1";
+}
+
+function tornadoVisual(scene: string): TornadoImagineClipId {
+  return scene === "tornado-sky" ? "sky" : "shelter";
+}
+
+function tornadoStillFile(clipId: TornadoImagineClipId): string {
+  return clipId === "sky" ? "stills/sky.svg" : "stills/shelter.svg";
+}
+
+function writeTornadoLocalMedia(): void {
+  mkdirSync(TORNADO_CAPTION_DIR, { recursive: true });
+  mkdirSync(path.join(TORNADO_DIR, "stills"), { recursive: true });
+  mkdirSync(TORNADO_SOURCE_DIR, { recursive: true });
+  mkdirSync(TORNADO_AUDIO_DIR, { recursive: true });
+  mkdirSync(TORNADO_MUX_DIR, { recursive: true });
+  for (const beat of TORNADO_BEATS) {
+    const existing = path.join(TORNADO_CAPTION_DIR, `${beat.id}.vtt`);
+    if (!existsSync(existing)) {
+      writeFileSync(existing, vttFromNarration(beat.narration, VIDEO_DURATION_SECONDS));
+    }
+  }
+  if (!existsSync(path.join(TORNADO_DIR, "manifest.json"))) {
+    const manifest = emptyTornadoMediaManifest();
+    const json = `${JSON.stringify(manifest, null, 2)}\n`;
+    writeFileSync(path.join(TORNADO_DIR, "manifest.json"), json);
+    writeFileSync(path.join(ROOT, "src", "lib", "lesson", "tornado-media-manifest.json"), json);
+  }
+  console.log(
+    `Tornado local stills/captions ready. Paid generation: ${TORNADO_IMAGINE_CLIP_IDS.length} Imagine clips (${Object.keys(TORNADO_CLIP_PROMPTS).join(", ")}) and ${TORNADO_BEATS.length} TTS jobs. Scene map: ${JSON.stringify(TORNADO_SCENE_CLIP_SOURCE)}.`,
+  );
+}
+
+function writeTornadoManifest(jobs: TornadoJobFile, hashes: Record<string, string>): void {
+  const manifest = emptyTornadoMediaManifest();
+  manifest.generatedAt = new Date().toISOString();
+  let savedCount = 0;
+  for (const clipId of TORNADO_IMAGINE_CLIP_IDS) {
+    const job = jobs[clipId];
+    const stillRel = tornadoStillFile(clipId);
+    manifest.clips[clipId] = {
+      requestId: job.requestId,
+      sourceFile: job.sourceFile,
+      stillFile: stillRel,
+      status: job.status,
+      diagnostic: job.diagnostic,
+    };
+    if (job.status === "saved") savedCount += 1;
+  }
+  for (const clip of narrationClips(TORNADO_BEATS)) {
+    const visual = tornadoVisual(clip.scene);
+    const audioRel = existsSync(path.join(TORNADO_AUDIO_DIR, `${clip.id}.mp3`)) ? `audio/${clip.id}.mp3` : null;
+    const muxRel = existsSync(path.join(TORNADO_MUX_DIR, `${clip.id}.mp4`)) ? `muxed/${clip.id}.mp4` : null;
+    const captionRel = existsSync(path.join(TORNADO_CAPTION_DIR, `${clip.id}.vtt`)) ? `captions/${clip.id}.vtt` : null;
+    const stillRel = tornadoStillFile(visual);
+    const keepDiagram = TORNADO_DIAGRAM_BEATS.has(clip.id);
+    const expectedHash = narrationFingerprint(clip.text);
+    const storedHash = hashes[clip.id] ?? null;
+    const audioIsCurrent = Boolean(audioRel && storedHash === expectedHash);
+    let muxStatus: "ready" | "audio-only" | "still-only" | "missing" = "still-only";
+    let narrationStatus: "current" | "stale" | "missing" = "missing";
+    let note =
+      "On-screen teaching text is current. Tornado video and Grok Voice narration have not been generated.";
+    if (audioRel && !audioIsCurrent) {
+      narrationStatus = "stale";
+      note =
+        "On-screen teaching text is current. Existing voice audio is from a previous script and is not attached until you regenerate narration.";
+    }
+    if (audioIsCurrent && keepDiagram) {
+      muxStatus = "audio-only";
+      narrationStatus = "current";
+      note =
+        "Current narration is available. The labeled shelter diagram is the instructional visual. Generated footage is illustrative only.";
+    } else if (audioIsCurrent && muxRel && !keepDiagram) {
+      muxStatus = "ready";
+      narrationStatus = "current";
+      note =
+        "Generated practice clip with current muxed narration. Not documentary footage. Shelter instructions stay in the sourced text and labeled diagram.";
+    } else if (audioIsCurrent) {
+      muxStatus = "audio-only";
+      narrationStatus = "current";
+      note = "Current narration is available. A labeled still is shown.";
+    }
+    manifest.beats[clip.id] = {
+      video: audioIsCurrent && muxRel && !keepDiagram ? muxRel : null,
+      audio: audioIsCurrent ? audioRel : null,
+      captions: audioIsCurrent ? captionRel : null,
+      still: stillRel,
+      visualSource: visual,
+      muxStatus,
+      narrationStatus,
+      narrationFingerprint: audioIsCurrent ? expectedHash : storedHash,
+      note,
+    };
+  }
+  manifest.videoStatus =
+    savedCount === TORNADO_IMAGINE_CLIP_IDS.length ? "ready" : savedCount > 0 ? "partial" : "not-generated";
+  const json = `${JSON.stringify(manifest, null, 2)}\n`;
+  writeFileSync(path.join(TORNADO_DIR, "manifest.json"), json);
+  writeFileSync(path.join(ROOT, "src", "lib", "lesson", "tornado-media-manifest.json"), json);
+}
+
+async function pollAndSaveTo(
+  apiKey: string,
+  clipId: string,
+  requestId: string,
+  lessonDir: string,
+): Promise<{ sourceFile: string } | { diagnostic: string }> {
+  const deadline = Date.now() + 12 * 60 * 1000;
+  while (Date.now() < deadline) {
+    const response = await fetch(`${VIDEO_STATUS_URL}/${requestId}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+    if (!response.ok) {
+      const code =
+        payload && typeof payload === "object" && (payload as { error?: { code?: string } }).error?.code
+          ? String((payload as { error: { code: string } }).error.code)
+          : undefined;
+      return { diagnostic: sanitizeDiagnostic({ httpStatus: response.status, code }) };
+    }
+    const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+    const status = typeof record.status === "string" ? record.status : "pending";
+    if (status === "pending") {
+      const progress = typeof record.progress === "number" ? ` ${record.progress}%` : "";
+      console.log(`Polling ${clipId}${progress}…`);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      continue;
+    }
+    if (status === "failed" || status === "expired") {
+      const code =
+        record.error && typeof record.error === "object" && typeof (record.error as { code?: unknown }).code === "string"
+          ? (record.error as { code: string }).code
+          : undefined;
+      return { diagnostic: sanitizeDiagnostic({ status, code }) };
+    }
+    if (status === "done") {
+      const video = record.video && typeof record.video === "object" ? (record.video as Record<string, unknown>) : {};
+      const url = typeof video.url === "string" ? video.url : null;
+      const moderated = video.respect_moderation === true;
+      if (!url || !moderated) {
+        return { diagnostic: sanitizeDiagnostic({ status: "done", code: "empty_or_unusable_video" }) };
+      }
+      const download = await fetch(url);
+      if (!download.ok) {
+        return { diagnostic: sanitizeDiagnostic({ httpStatus: download.status, status: "download_failed" }) };
+      }
+      const bytes = Buffer.from(await download.arrayBuffer());
+      if (bytes.byteLength < 10_000) {
+        return { diagnostic: sanitizeDiagnostic({ status: "done", code: "file_too_small" }) };
+      }
+      const sourceFile = `source/${clipId}.mp4`;
+      writeFileSync(path.join(lessonDir, sourceFile), bytes);
+      console.log(`Saved ${sourceFile} (${bytes.byteLength} bytes).`);
+      return { sourceFile };
+    }
+    return { diagnostic: sanitizeDiagnostic({ status }) };
+  }
+  return { diagnostic: sanitizeDiagnostic({ status: "poll_timeout" }) };
+}
+
+async function generateTornadoClip(
+  apiKey: string,
+  clipId: TornadoImagineClipId,
+  jobs: TornadoJobFile,
+): Promise<string | null> {
+  const sourcePath = path.join(TORNADO_SOURCE_DIR, `${clipId}.mp4`);
+  if (existsSync(sourcePath)) {
+    jobs[clipId] = {
+      requestId: jobs[clipId].requestId,
+      status: "saved",
+      diagnostic: null,
+      sourceFile: `source/${clipId}.mp4`,
+    };
+    writeTornadoJobs(jobs);
+    console.log(`Skipping Imagine for tornado ${clipId}; source file already exists.`);
+    return null;
+  }
+  if (jobs[clipId].status === "failed") {
+    const diagnostic = jobs[clipId].diagnostic ?? "video_generation_failed";
+    console.error(`Tornado ${clipId} previously failed (${diagnostic}). Not retrying in this run.`);
+    return diagnostic;
+  }
+  let requestId = jobs[clipId].requestId;
+  if (!requestId) {
+    console.log(`Submitting Imagine job for tornado ${clipId}…`);
+    const started = await startGeneration(apiKey, TORNADO_CLIP_PROMPTS[clipId]);
+    if ("diagnostic" in started) {
+      jobs[clipId] = { requestId: null, status: "failed", diagnostic: started.diagnostic, sourceFile: null };
+      writeTornadoJobs(jobs);
+      console.error(`Tornado ${clipId} failed: ${started.diagnostic}`);
+      return started.diagnostic;
+    }
+    requestId = started.requestId;
+    jobs[clipId] = { requestId, status: "pending", diagnostic: null, sourceFile: null };
+    writeTornadoJobs(jobs);
+  } else {
+    console.log(`Polling existing tornado ${clipId} job…`);
+  }
+  const saved = await pollAndSaveTo(apiKey, clipId, requestId, TORNADO_DIR);
+  if ("diagnostic" in saved) {
+    jobs[clipId] = { requestId, status: "failed", diagnostic: saved.diagnostic, sourceFile: null };
+    writeTornadoJobs(jobs);
+    console.error(`Tornado ${clipId} failed: ${saved.diagnostic}`);
+    return saved.diagnostic;
+  }
+  jobs[clipId] = { requestId, status: "saved", diagnostic: null, sourceFile: saved.sourceFile };
+  writeTornadoJobs(jobs);
+  return null;
+}
+
+async function generateTornadoPaidMedia(apiKey: string): Promise<void> {
+  requireFfmpeg();
+  mkdirSync(TORNADO_SOURCE_DIR, { recursive: true });
+  mkdirSync(TORNADO_AUDIO_DIR, { recursive: true });
+  mkdirSync(TORNADO_MUX_DIR, { recursive: true });
+  mkdirSync(TORNADO_CAPTION_DIR, { recursive: true });
+  const jobs = readTornadoJobs();
+  const paidFailures: string[] = [];
+  for (const clipId of TORNADO_IMAGINE_CLIP_IDS) {
+    const failure = await generateTornadoClip(apiKey, clipId, jobs);
+    if (failure) {
+      paidFailures.push(`${clipId}: ${failure}`);
+      console.error(`Stopping remaining Imagine jobs after tornado ${clipId} failed. TTS will still run. Report this error before any retry.`);
+      break;
+    }
+  }
+
+  const hashes = readTornadoHashes();
+  for (const clip of narrationClips(TORNADO_BEATS)) {
+    const expected = narrationFingerprint(clip.text);
+    const audioPath = path.join(TORNADO_AUDIO_DIR, `${clip.id}.mp3`);
+    const needsTts = !existsSync(audioPath) || hashes[clip.id] !== expected;
+    if (!needsTts) {
+      console.log(`Skipping unchanged tornado narration for ${clip.id}.`);
+      continue;
+    }
+    const audioRel = await generateNarration(apiKey, clip.id, clip.text, true, TORNADO_DIR);
+    if (!audioRel) {
+      paidFailures.push(`${clip.id}: tts_failed`);
+      console.error(`Stopping remaining TTS jobs after ${clip.id} failed. Report this error before any retry.`);
+      break;
+    }
+    hashes[clip.id] = expected;
+    writeTornadoHashes(hashes);
+    const duration = probeDuration(path.join(TORNADO_DIR, audioRel));
+    writeFileSync(path.join(TORNADO_CAPTION_DIR, `${clip.id}.vtt`), vttFromNarration(clip.text, duration));
+    if (TORNADO_DIAGRAM_BEATS.has(clip.id)) {
+      console.log(`Keeping labeled shelter diagram for ${clip.id}; not muxing Imagine footage as the instructional visual.`);
+      continue;
+    }
+    const visual = tornadoVisual(clip.scene);
+    const sourceRel = jobs[visual].sourceFile;
+    const muxPath = path.join(TORNADO_MUX_DIR, `${clip.id}.mp4`);
+    if (sourceRel && existsSync(path.join(TORNADO_DIR, sourceRel))) {
+      const ok = muxNarration(path.join(TORNADO_DIR, sourceRel), path.join(TORNADO_DIR, audioRel), muxPath, duration);
+      if (!ok) console.error(`${clip.id} mux failed: ffmpeg_error`);
+    }
+  }
+
+  writeTornadoManifest(jobs, hashes);
+  console.log("Tornado lesson media manifest saved.");
+  if (paidFailures.length > 0) {
+    throw new Error(`Tornado paid generation reported failures: ${paidFailures.join("; ")}`);
+  }
+}
+
 async function main(): Promise<void> {
   loadEnvLocal();
+  if (selectedLessonId() === TORNADO_LESSON_ID) {
+    writeTornadoLocalMedia();
+    if (!process.argv.includes("--confirm-paid")) {
+      console.log(
+        `No Imagine or TTS calls. Later paid command: npm run generate:lesson-media -- --lesson tornado-home-1 --confirm-paid (${TORNADO_IMAGINE_CLIP_IDS.length} video, ${TORNADO_BEATS.length} TTS).`,
+      );
+      return;
+    }
+    const apiKey = process.env.XAI_API_KEY?.trim();
+    if (!apiKey) {
+      throw new Error("XAI_API_KEY is missing. Add it to the environment or .env.local.");
+    }
+    await generateTornadoPaidMedia(apiKey);
+    return;
+  }
   const narrationOnly = process.argv.includes("--narration-only");
   mkdirSync(SOURCE_DIR, { recursive: true });
   mkdirSync(AUDIO_DIR, { recursive: true });
@@ -524,7 +873,7 @@ async function main(): Promise<void> {
     writeHashes(hashes);
     const duration = probeDuration(path.join(LESSON_DIR, audioRel));
     writeFileSync(path.join(CAPTION_DIR, `${clip.id}.vtt`), vttFromNarration(clip.text, duration));
-    const visual = SCENE_CLIP_SOURCE[clip.scene];
+    const visual = hurricaneVisual(clip.scene);
     const sourceRel = jobs[visual].sourceFile;
     const muxPath = path.join(MUX_DIR, `${clip.id}.mp4`);
     if (sourceRel && existsSync(path.join(LESSON_DIR, sourceRel))) {

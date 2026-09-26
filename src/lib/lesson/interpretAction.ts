@@ -40,7 +40,7 @@ export async function interpretLessonUtterance(
       "missing_credentials",
     );
   }
-  const prompt = buildLessonInterpretationPrompt(parsed.beatId, parsed.utterance);
+  const prompt = buildLessonInterpretationPrompt(parsed.beatId, parsed.utterance, parsed.lessonId);
   const raw = await (deps.complete ?? completeStructuredJson)({
     apiKey: deps.apiKey,
     model: deps.model ?? getConfiguredModel(),

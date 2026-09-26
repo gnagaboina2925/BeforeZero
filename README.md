@@ -5,7 +5,7 @@ Accessible emergency-learning website. Tagline: **Practice before it matters.**
 Three on-site paths:
 
 1. **Learn** (`/learn`) — two sourced U.S. storm case studies from NHC and FEMA records.
-2. **Practice** (`/practice`) — one captioned hurricane/flooding lesson. Video has not been generated; stills are labeled fallbacks. Secondary: `/simulate` (blackout) and `/practice/rehearsal` (five-step household rehearsal).
+2. **Practice** (`/practice`) — choose the hurricane or tornado lesson. Stable URLs: `/practice/hurricane` and `/practice/tornado`. The hurricane lesson remains at that path; `/practice/hurricane-flood-1` redirects there. Secondary: `/simulate` (blackout) and `/practice/rehearsal` (five-step household rehearsal).
 3. **Alerts** (`/alerts`) — on-demand National Weather Service active alerts for a U.S. place you confirm. Not a notification or dispatch service. Browser geolocation is not requested.
 
 Display and listening options (text size, contrast, captions, narration controls, reduced motion) do not ask for a disability. This project does not claim WCAG certification.
@@ -66,6 +66,22 @@ npm run generate:lesson-narration
 Automated tests mock the provider and do not spend API credits. `npm run generate:scenes` is the only command that creates Grok Imagine stills. It is not run during `dev`, `build`, or user interactions.
 
 `npm run generate:lesson-narration` regenerates only changed Grok Voice scripts and remuxes existing Imagine clips. It does not start Imagine jobs. The Practice UI does not show script hashes or regeneration commands. Until hashes match the current teaching script, the lesson shows “Updated narration is being prepared. Text guidance is available.” and does not play leftover audio.
+
+Hurricane remuxing reads the original Imagine files in `public/lesson/source/` (`watch.mp4` 6.6 MB, `street.mp4` 12.3 MB, `flood.mp4` 6.7 MB, `interior.mp4` 3.7 MB; about 28 MB together). Those files are local working copies and are not in git. Do not delete them. Without them, `--narration-only` cannot remux new voice onto the existing clips.
+
+Tornado media lives under `public/lesson/tornado/`. Local labeled SVGs and captions do not call Imagine or TTS:
+
+```bash
+npm run generate:lesson-media -- --lesson tornado-home-1
+```
+
+Paid tornado generation (approved when run with `--confirm-paid`): **2** Grok Imagine video jobs (`sky`, `shelter`) and **8** Grok TTS jobs. It does not regenerate hurricane clips. The labeled shelter diagram stays the instructional visual; Imagine footage is illustrative only.
+
+```bash
+npm run generate:lesson-media -- --lesson tornado-home-1 --confirm-paid
+```
+
+Reviewed tornado URLs (26 Sep 2026): https://www.weather.gov/safety/tornado-ww ; https://www.weather.gov/safety/tornado-during ; https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html
 
 ## Grok Imagine scene illustrations
 

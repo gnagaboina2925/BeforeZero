@@ -14,6 +14,7 @@ interface LessonStageProps {
   showCaptions: boolean;
   reduceMotion: boolean;
   autoPlay: boolean;
+  mediaBasePath?: string;
   onPauseRequest?: (pause: () => void) => void;
 }
 
@@ -26,6 +27,7 @@ export function LessonStage({
   showCaptions,
   reduceMotion,
   autoPlay,
+  mediaBasePath = "/lesson",
   onPauseRequest,
 }: LessonStageProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -35,7 +37,7 @@ export function LessonStage({
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  const publicPath = (rel: string | null | undefined) => (rel ? `/lesson/${rel}` : null);
+  const publicPath = (rel: string | null | undefined) => (rel ? `${mediaBasePath}/${rel}` : null);
   const narrationReady = media?.narrationStatus === "current";
   const videoSrc = publicPath(media?.video ?? null);
   const audioSrc = publicPath(narrationReady ? media?.audio ?? null : null);

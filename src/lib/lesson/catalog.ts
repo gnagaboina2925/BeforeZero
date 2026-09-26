@@ -1,5 +1,5 @@
 import type { LessonSourceId } from "./sources.ts";
-export { LESSON_SOURCE_LINKS } from "./sources.ts";
+export { LESSON_SOURCE_LINKS, TORNADO_SOURCE_LINKS } from "./sources.ts";
 
 export const LESSON_ID = "hurricane-flood-1";
 
@@ -12,13 +12,34 @@ export const LESSON_ACTION_IDS = [
   "highest-floor",
   "closed-attic",
   "wait-for-alerts",
+  "go-basement-interior",
+  "watch-from-window",
+  "drive-away",
+  "stay-put-watch",
 ] as const;
 export type LessonActionId = (typeof LESSON_ACTION_IDS)[number];
 
 export type LessonBeatKind = "play" | "decision" | "debrief";
-export type LessonCondition = "before-storm" | "official-evac" | "high-winds" | "flood-waters" | "trapped-by-flooding";
-export type LessonOverlayId = "none" | "alert-card" | "flooded-road" | "building-cutaway";
-export type LessonSceneId = "watch" | "rain" | "street" | "interior" | "flood";
+export type LessonCondition =
+  | "before-storm"
+  | "official-evac"
+  | "high-winds"
+  | "flood-waters"
+  | "trapped-by-flooding"
+  | "tornado-watch"
+  | "tornado-prepare"
+  | "tornado-warning-home"
+  | "tornado-access";
+export type LessonOverlayId =
+  | "none"
+  | "alert-card"
+  | "flooded-road"
+  | "building-cutaway"
+  | "tornado-alert-card"
+  | "tornado-home-shelter";
+export type HurricaneSceneId = "watch" | "rain" | "street" | "interior" | "flood";
+export type TornadoSceneId = "tornado-sky" | "tornado-shelter";
+export type LessonSceneId = HurricaneSceneId | TornadoSceneId;
 
 export interface LessonAction {
   id: LessonActionId;
@@ -368,6 +389,14 @@ export function conditionLabel(condition: LessonCondition | null): string | null
       return "Condition: flood water on a road or street";
     case "trapped-by-flooding":
       return "Condition: trapped by flooding inside a building";
+    case "tornado-watch":
+      return "Condition: tornado watch — be prepared";
+    case "tornado-prepare":
+      return "Condition: prepare a shelter plan before severe weather";
+    case "tornado-warning-home":
+      return "Condition: fictional tornado warning in a sturdy house with a basement";
+    case "tornado-access":
+      return "Condition: access considerations in the same sturdy-home setting";
     default:
       return null;
   }

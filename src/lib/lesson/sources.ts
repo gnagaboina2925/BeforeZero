@@ -17,7 +17,25 @@ export type LessonSourceId =
   | "ready-alerts-eas"
   | "ready-alerts-nwr"
   | "ready-disability-network"
-  | "ready-disability-registry";
+  | "ready-disability-registry"
+  | "nws-tornado-watch"
+  | "nws-tornado-warning"
+  | "nws-tornado-during-ready"
+  | "nws-tornado-during-house"
+  | "nws-tornado-during-outside"
+  | "nws-tornado-during-vehicle"
+  | "cdc-tornado-warning"
+  | "cdc-tornado-signs"
+  | "cdc-tornado-tuned"
+  | "cdc-tornado-home-basement"
+  | "cdc-tornado-home-no-basement"
+  | "cdc-tornado-windows"
+  | "cdc-tornado-cover"
+  | "cdc-tornado-mobile-home"
+  | "cdc-tornado-vehicle"
+  | "cdc-tornado-outside"
+  | "cdc-tornado-wheelchair"
+  | "cdc-tornado-unable-to-move";
 
 export interface LessonSource {
   id: LessonSourceId;
@@ -173,11 +191,161 @@ export const LESSON_SOURCES: Record<LessonSourceId, LessonSource> = {
     excerpt:
       "Many city and county emergency management agencies maintain voluntary registries for people with disabilities to self-identify in order to receive targeted assistance during emergencies and disasters. Contact your local emergency management office to find out more.",
   },
+  "nws-tornado-watch": {
+    id: "nws-tornado-watch",
+    title: "NWS — Tornado Watch",
+    url: "https://www.weather.gov/safety/tornado-ww",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Tornado Watch: Be Prepared! Tornadoes are possible in and near the watch area. Review and discuss your emergency plans, take inventory of your supplies and check your safe room. Be ready to act quickly if a warning is issued or you suspect a tornado is approaching.",
+  },
+  "nws-tornado-warning": {
+    id: "nws-tornado-warning",
+    title: "NWS — Tornado Warning",
+    url: "https://www.weather.gov/safety/tornado-ww",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Tornado Warning: Take Action! A tornado has been sighted or indicated by weather radar. There is imminent danger to life and property. Move to an interior room on the lowest floor of a sturdy building. Avoid windows. If in a mobile home, a vehicle, or outdoors, move to the closest substantial shelter and protect yourself from flying debris.",
+  },
+  "nws-tornado-during-ready": {
+    id: "nws-tornado-during-ready",
+    title: "NWS — Stay Weather-Ready",
+    url: "https://www.weather.gov/safety/tornado-during",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Continue to listen to local news or a NOAA Weather Radio to stay updated about tornado watches and warnings.",
+  },
+  "nws-tornado-during-house": {
+    id: "nws-tornado-during-house",
+    title: "NWS — At Your House",
+    url: "https://www.weather.gov/safety/tornado-during",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If you are in a tornado warning, go to your basement, safe room, or an interior room away from windows. Don't forget pets if time allows.",
+  },
+  "nws-tornado-during-outside": {
+    id: "nws-tornado-during-outside",
+    title: "NWS — Outside",
+    url: "https://www.weather.gov/safety/tornado-during",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Seek shelter inside a sturdy building immediately if a tornado is approaching. Sheds and storage facilities are not safe. Neither is a mobile home or tent.",
+  },
+  "nws-tornado-during-vehicle": {
+    id: "nws-tornado-during-vehicle",
+    title: "NWS — In a vehicle",
+    url: "https://www.weather.gov/safety/tornado-during",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Being in a vehicle during a tornado is not safe. The best course of action is to drive to the closest shelter. If you are unable to make it to a safe shelter, either get down in your car and cover your head, or abandon your car and seek shelter in a low lying area such as a ditch or ravine.",
+  },
+  "cdc-tornado-warning": {
+    id: "cdc-tornado-warning",
+    title: "CDC — Take shelter immediately during a tornado warning",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt: "A tornado warning is issued when a tornado is sighted or indicated by weather radar.",
+  },
+  "cdc-tornado-signs": {
+    id: "cdc-tornado-signs",
+    title: "CDC — Take shelter if you see signs of a tornado",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Sometimes tornadoes strike quickly, without time for a tornado warning. Signs that a tornado may be approaching include: rotating funnel-shaped cloud; approaching cloud of debris; dark or green-colored sky; large, dark, low-lying cloud; large hail; loud roar that sounds like a freight train.",
+  },
+  "cdc-tornado-tuned": {
+    id: "cdc-tornado-tuned",
+    title: "CDC — Stay tuned",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt: "Keep tuned to local radio and TV stations, a NOAA weather radio, or your mobile phone.",
+  },
+  "cdc-tornado-home-basement": {
+    id: "cdc-tornado-home-basement",
+    title: "CDC — If you’re at home",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If you’re at home, go to your basement or an inside room, without windows, on the lowest floor. The safest place in the home is the interior part of a basement.",
+  },
+  "cdc-tornado-home-no-basement": {
+    id: "cdc-tornado-home-no-basement",
+    title: "CDC — If you don't have a basement",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If you don't have a basement, go to an inside room, without windows, on the lowest floor. This could be a center hallway, bathroom, or closet. Avoid taking shelter where there are heavy objects on the floor directly above you.",
+  },
+  "cdc-tornado-windows": {
+    id: "cdc-tornado-windows",
+    title: "CDC — Stay away from windows",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Pick a place in the home where family members can gather if a tornado is headed your way. One basic rule is AVOID WINDOWS. An exploding window can injure or kill.",
+  },
+  "cdc-tornado-cover": {
+    id: "cdc-tornado-cover",
+    title: "CDC — added protection under something sturdy",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "For added protection, get under something sturdy such as a heavy table or workbench. If possible, cover your body with a blanket, sleeping bag, or mattress, and protect your head with anything available—even your hands.",
+  },
+  "cdc-tornado-mobile-home": {
+    id: "cdc-tornado-mobile-home",
+    title: "CDC — If you live in a mobile home",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Don't stay in a mobile home during a tornado. Mobile homes can turn over during strong winds. Even mobile homes with a tie-down system cannot withstand the force of tornado winds. If you live in a mobile home, go to a nearby building, preferably one with a basement.",
+  },
+  "cdc-tornado-vehicle": {
+    id: "cdc-tornado-vehicle",
+    title: "CDC — If you're in a vehicle",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "Don't try to outrun a tornado. Drive to the closest shelter. If you're unable to make it to a safe shelter, either get down in your vehicle and cover your head and neck or leave your vehicle and seek shelter in a low-lying area such as a ditch or ravine. Stay away from highway overpasses and bridges.",
+  },
+  "cdc-tornado-outside": {
+    id: "cdc-tornado-outside",
+    title: "CDC — If you're outside",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If there is no shelter nearby, go to a low-lying area such as a ditch or ravine and lie flat. Protect your head and neck with an object or with your arms. Avoid areas with many trees.",
+  },
+  "cdc-tornado-wheelchair": {
+    id: "cdc-tornado-wheelchair",
+    title: "CDC — If you are in a wheelchair",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If you are in a wheelchair, get away from windows and go to an interior room of the house. If possible, seek shelter under a sturdy table or desk. Cover your head with anything available, even your hands.",
+  },
+  "cdc-tornado-unable-to-move": {
+    id: "cdc-tornado-unable-to-move",
+    title: "CDC — If you're unable to move from a bed or a chair",
+    url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html",
+    retrieved: "2026-09-26",
+    excerpt:
+      "If you're unable to move from a bed or a chair and assistance is not available, protect yourself from falling objects by covering up with blankets and pillows.",
+  },
 };
 
 export const LESSON_SOURCE_LINKS = [
   { title: "Hurricanes (Ready.gov)", url: "https://www.ready.gov/hurricanes" },
   { title: "Floods (Ready.gov)", url: "https://www.ready.gov/floods" },
+  { title: "Emergency Alerts (Ready.gov)", url: "https://www.ready.gov/alerts" },
+  { title: "People with Disabilities (Ready.gov)", url: "https://www.ready.gov/disability" },
+] as const;
+
+export const TORNADO_SOURCE_LINKS = [
+  { title: "Understand Tornado Alerts (NWS)", url: "https://www.weather.gov/safety/tornado-ww" },
+  { title: "What to do During a Tornado (NWS)", url: "https://www.weather.gov/safety/tornado-during" },
+  { title: "Stay Safe During a Tornado (CDC)", url: "https://www.cdc.gov/tornadoes/safety/stay-safe-during-a-tornado-safety.html" },
   { title: "Emergency Alerts (Ready.gov)", url: "https://www.ready.gov/alerts" },
   { title: "People with Disabilities (Ready.gov)", url: "https://www.ready.gov/disability" },
 ] as const;
