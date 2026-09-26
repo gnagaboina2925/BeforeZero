@@ -169,7 +169,7 @@ export function emptyTornadoMediaManifest(): LessonMediaManifest {
     videoStatus: "not-generated",
     generatedAt: null,
     clips: {
-      sky: { requestId: null, sourceFile: null, stillFile: "stills/sky.svg", status: "missing", diagnostic: null },
+      sky: { requestId: null, sourceFile: null, stillFile: "stills/sky.jpg", status: "missing", diagnostic: null },
       shelter: {
         requestId: null,
         sourceFile: null,
@@ -185,7 +185,7 @@ export function emptyTornadoMediaManifest(): LessonMediaManifest {
           video: null,
           audio: null,
           captions: `captions/${beat.id}.vtt`,
-          still: beat.scene === "tornado-sky" ? "stills/sky.svg" : "stills/shelter.svg",
+          still: beat.scene === "tornado-sky" ? "stills/sky.jpg" : "stills/shelter.svg",
           visualSource: TORNADO_SCENE_CLIP_SOURCE[beat.scene === "tornado-sky" ? "tornado-sky" : "tornado-shelter"],
           muxStatus: "still-only" as const,
           narrationStatus: "missing" as const,

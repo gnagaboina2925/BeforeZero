@@ -537,7 +537,7 @@ function tornadoVisual(scene: string): TornadoImagineClipId {
 }
 
 function tornadoStillFile(clipId: TornadoImagineClipId): string {
-  return clipId === "sky" ? "stills/sky.svg" : "stills/shelter.svg";
+  return clipId === "sky" ? "stills/sky.jpg" : "stills/shelter.svg";
 }
 
 function writeTornadoLocalMedia(): void {

@@ -87,7 +87,7 @@ export const LESSON_DEFINITIONS: Record<PlatformLessonId, LessonDefinition> = {
     kicker: "Guided emergency training",
     heading: "Know the warning. Know this house’s shelter.",
     lede: "Learn watch versus warning, see a labeled diagram, and practice at your pace.",
-    previewStill: "/lesson/tornado/stills/sky.svg",
+    previewStill: "/lesson/tornado/stills/sky.jpg",
     previewCaption: "Tornado training: sturdy house with a basement",
     previewNote: "Labeled shelter diagram is the instruction. Generated clips are illustrative only.",
     mediaBasePath: "/lesson/tornado",
