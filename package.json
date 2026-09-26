@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --experimental-detect-module --test src/lib/interpret.test.ts src/lib/xai.test.ts src/lib/diagnostics.test.ts src/lib/voice.test.ts src/lib/scenario.test.ts src/lib/evaluate.test.ts src/lib/sceneAssets.test.ts",
+    "generate:scenes": "node --experimental-strip-types --experimental-detect-module scripts/generate-scenes.ts"
   },
   "dependencies": {
     "next": "16.3.6",

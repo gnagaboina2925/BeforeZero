@@ -1,0 +1,17 @@
+{
+  "model": "grok-imagine-image-2.0",
+  "generatedAt": "2026-09-26T03:11:16.971Z",
+  "aspectRatio": "16:9",
+  "assets": {
+    "outage-room": {
+      "id": "outage-room",
+      "file": "outage-room.jpg",
+      "prompt": "A calm apartment living room during a nighttime power outage, unlit electric fixtures, soft moonlight through a window, midnight navy palette, cinematic editorial illustration, no people, no flames, no text."
+    },
+    "phone-backup": {
+      "id": "phone-backup",
+      "file": "phone-backup.jpg",
+      "prompt": "Close-up of a phone casting a small pool of light on a table in a dark apartment, navy and amber palette, cinematic editorial illustration, no people, no flames, no readable screen text, no battery percentage, no text overlay."
+    }
+  }
+}
