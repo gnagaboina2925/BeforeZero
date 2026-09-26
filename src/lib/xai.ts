@@ -21,6 +21,7 @@ export type XaiCompleteArgs = {
   userContent: string;
   schema: Record<string, unknown>;
   timeoutMs?: number;
+  maxCompletionTokens?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -166,6 +167,7 @@ export async function completeStructuredJson({
   userContent,
   schema,
   timeoutMs = XAI_TIMEOUT_MS,
+  maxCompletionTokens = 400,
   fetchImpl = fetch,
 }: XaiCompleteArgs): Promise<unknown> {
   const hasApiKey = apiKeyPresent(apiKey);
@@ -205,7 +207,7 @@ export async function completeStructuredJson({
       body: JSON.stringify({
         model,
         reasoning_effort: "none",
-        max_completion_tokens: 400,
+        max_completion_tokens: maxCompletionTokens,
         messages: [
           { role: "system", content: instructions },
           { role: "user", content: userContent },

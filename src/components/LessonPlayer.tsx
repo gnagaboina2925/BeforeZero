@@ -22,6 +22,7 @@ import {
   overlayForState,
 } from "@/lib/lesson/player";
 import { MAX_TYPED_ANSWER_LENGTH, type InterpretError } from "@/lib/types";
+import { useRouter } from "next/navigation";
 import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
 
 function subscribeReducedMotion(onChange: () => void) {
@@ -169,6 +170,9 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
               >
                 Practice my decisions
               </button>
+              {lessonId === "hurricane-flood-1" ? (
+                <RehearsePlanEntryLink onNavigate={() => pauseMedia.current()} />
+              ) : null}
             </div>
           </div>
           <figure className="practice-preview">
@@ -435,6 +439,9 @@ export function LessonPlayer({ lessonId }: { lessonId: PlatformLessonId }) {
               >
                 Practice this lesson
               </button>
+              {lessonId === "hurricane-flood-1" ? (
+                <RehearsePlanEntryLink onNavigate={() => pauseMedia.current()} />
+              ) : null}
               <button type="button" className="btn-secondary" onClick={() => window.print()}>
                 Print notes
               </button>
@@ -535,6 +542,39 @@ function DebriefContent({
         ))}
       </ul>
     </>
+  );
+}
+
+function RehearsePlanEntryLink({ onNavigate }: { onNavigate: () => void }) {
+  const router = useRouter();
+  const href = "/practice/hurricane/rehearse-plan";
+
+  function go(event?: { preventDefault: () => void }) {
+    event?.preventDefault();
+    onNavigate();
+    router.push(href);
+  }
+
+  return (
+    <a
+      className="btn-secondary"
+      href={href}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+          onNavigate();
+          return;
+        }
+        go(event);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === " ") {
+          event.preventDefault();
+          go();
+        }
+      }}
+    >
+      Rehearse my plan
+    </a>
   );
 }
 

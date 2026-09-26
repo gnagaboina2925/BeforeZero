@@ -18,6 +18,9 @@ export type LessonSourceId =
   | "ready-alerts-nwr"
   | "ready-disability-network"
   | "ready-disability-registry"
+  | "ready-disability-transport"
+  | "ready-disability-neighbors"
+  | "ready-high-rise-elevators"
   | "nws-tornado-watch"
   | "nws-tornado-warning"
   | "nws-tornado-during-ready"
@@ -199,6 +202,29 @@ export const LESSON_SOURCES: Record<LessonSourceId, LessonSource> = {
     retrieved: "2026-09-09",
     excerpt:
       "Many city and county emergency management agencies maintain voluntary registries for people with disabilities to self-identify in order to receive targeted assistance during emergencies and disasters. Contact your local emergency management office to find out more.",
+  },
+  "ready-disability-transport": {
+    id: "ready-disability-transport",
+    title: "Ready.gov People with Disabilities — accessible transportation",
+    url: "https://www.ready.gov/disability",
+    retrieved: "2026-09-09",
+    excerpt:
+      "Plan ahead for accessible transportation that you may need for evacuation or getting around during or after disaster. Check with local transit providers as well as with your emergency management agency to identify appropriate accessible options.",
+  },
+  "ready-disability-neighbors": {
+    id: "ready-disability-neighbors",
+    title: "Ready.gov People with Disabilities — neighbors who can assist",
+    url: "https://www.ready.gov/disability",
+    retrieved: "2026-09-09",
+    excerpt: "Communicate with neighbors who can assist you if you need to evacuate the building.",
+  },
+  "ready-high-rise-elevators": {
+    id: "ready-high-rise-elevators",
+    title: "Ready.gov Plan for Locations — high-rise buildings",
+    url: "https://www.ready.gov/plan-for-locations",
+    retrieved: "2026-04-29",
+    excerpt:
+      "Do not use elevators. Know where the closest emergency exit is. Know another way out in case your first choice is blocked. Listen for and follow instructions.",
   },
   "nws-tornado-watch": {
     id: "nws-tornado-watch",

@@ -632,6 +632,26 @@ body {
   gap: 0.75rem;
 }
 
+.check-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  margin: 0.45rem 0;
+  color: var(--text);
+}
+
+.check-row input {
+  margin-top: 0.25rem;
+}
+
+.example-card {
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: rgba(11, 18, 32, 0.55);
+}
+
 .option-card {
   display: flex;
   gap: 0.9rem;
@@ -1340,6 +1360,10 @@ html[data-contrast="high"] .app-shell {
   display: grid;
   gap: 1.25rem;
   align-items: center;
+}
+
+.practice-hero .action-row {
+  padding-bottom: 3.25rem;
 }
 
 .practice-preview {
