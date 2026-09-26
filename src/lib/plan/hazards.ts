@@ -86,8 +86,8 @@ const TORNADO: PlanHazardConfig = {
   ],
   exampleKind: "communication",
   stepFreeNote: TORNADO_STEP_FREE_NOTE,
-  grokFocus:
-    "You extract grounded observations from a user's tornado plan for a sturdy home with a basement. Supported dependencies are a named alert method, a named support person, and unresolved access to a named shelter. Do not infer unresolved access from a wheelchair or disability mention alone. Require the user's words that a named shelter is hard to reach or not yet arranged. Do not treat this as a mobile home, vehicle, flood, or home-fire scene.",
+    grokFocus:
+    "You extract grounded observations from a user's tornado plan for a sturdy home with a basement. Supported dependencies are a named alert method, a named support person, and unresolved access to a named shelter. A named basement plus words that access is still unresolved, including 'I haven't arranged how to reach it' where 'it' refers to that shelter, is a shelter-access dependency. Copy complete short excerpts from the user's words. Do not infer unresolved access from a wheelchair or disability mention alone, and do not treat a named basement by itself as unresolved access. Do not treat this as a mobile home, vehicle, flood, or home-fire scene.",
 };
 
 const HOME_FIRE: PlanHazardConfig = {
@@ -115,7 +115,7 @@ const HOME_FIRE: PlanHazardConfig = {
   exampleKind: "alarm-perception",
   stepFreeNote: HOME_FIRE_STEP_FREE_NOTE,
   grokFocus:
-    "You extract grounded observations from a user's home-fire plan for a one-story house. Supported dependencies are: an alarm signal the user explicitly says they may not perceive; a named planned exit; and a named support person. Do not infer alarm-perception from a disability or accessibility preference. Require the user's words that they may not hear, see, or otherwise perceive the alarm. Do not mix tornado sheltering or flooding.",
+    "You extract grounded observations from a user's home-fire plan for a one-story house. Supported dependencies are: an alarm signal the user explicitly says they may not perceive; a named planned exit; and a named support person. Naming a smoke alarm is not a perception concern unless the user describes difficulty noticing its signal. Do not infer that the alarm is suitable or verified. Do not infer alarm-perception from a disability or accessibility preference. Require the user's words that they may not hear, see, or otherwise perceive the alarm. Do not mix tornado sheltering or flooding.",
 };
 
 const BY_ID: Record<PlanHazardId, PlanHazardConfig> = {

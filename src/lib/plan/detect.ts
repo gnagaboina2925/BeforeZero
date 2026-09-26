@@ -40,7 +40,9 @@ const EXIT_TERMS = ["front door", "back door", "side door", "bedroom door", "hal
 const ALARM_TERMS = ["smoke alarm", "fire alarm", "strobe", "alarm"];
 const ELEVATOR_TERMS = ["elevator", "lift"];
 const ACCESS_UNRESOLVED =
-  /\b(cannot get to|can't get to|can not get to|cannot reach|can't reach|haven'?t arranged how|have not arranged how|has not arranged how|hasn't arranged how|not sure how I would get|cannot use (the )?stairs|can't use (the )?stairs|haven'?t planned how to (reach|get)|have not planned how to (reach|get)|no way to get to|cannot access|can't access|have not arranged access|unresolved access)\b/i;
+  /\b(cannot get to|can't get to|can not get to|cannot reach|can't reach|haven't arranged how|have not arranged how|has not arranged how|hasn't arranged how|not sure how I would get|cannot use (the )?stairs|can't use (the )?stairs|haven't planned how to (reach|get)|have not planned how to (reach|get)|no way to get to|cannot access|can't access|have not arranged access|unresolved access)\b/i;
+const ACCESS_ARRANGED = /\b(have|has|i have|we have)\s+arranged how to (reach|get)\b/i;
+const SHELTER_PRONOUN_ACCESS = /\b(reach|get to) it\b/i;
 const PERCEPTION_LIMIT =
   /\b(may not hear|might not hear|cannot hear|can't hear|do not hear|don't hear|will not hear|won't hear|may not see|might not see|cannot see|can't see|do not see|don't see|may not notice|might not notice|cannot notice|can't notice|may not perceive|might not perceive|cannot perceive|can't perceive|hard of hearing|deaf|visually impaired|may miss|might miss)\b/i;
 
@@ -51,8 +53,12 @@ const SUPPORT_FAILURE_AFTER =
 const PREFIX_NEGATION =
   /\b(do not|don't|does not|doesn't|did not|didn't|haven'?t|have not|cannot|can't|can not|will not|won't|never|no longer|without|not)\b/i;
 
+export function foldTypographicMarks(text: string): string {
+  return text.replace(/[\u2018\u2019\u201B\u02BC\u2032]/g, "'");
+}
+
 export function normalizePlanText(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, " ").trim();
+  return foldTypographicMarks(text).toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 export function quoteAppearsInPlan(quote: string, utterance: string): boolean {
@@ -62,15 +68,24 @@ export function quoteAppearsInPlan(quote: string, utterance: string): boolean {
 }
 
 export function looksUnplanned(text: string): boolean {
-  return /\b(don'?t have|do not have|haven'?t|have not|no backup|not planned|never set up|no one to|without a|cannot help|can't help|unable to help)\b/i.test(
-    text,
+  return /\b(don't have|do not have|haven't|have not|no backup|not planned|never set up|no one to|without a|cannot help|can't help|unable to help)\b/i.test(
+    foldTypographicMarks(text),
   );
 }
 
 export function isElevatorUseExclusion(text: string): boolean {
   return /\b(do not|don't|does not|doesn't|did not|didn't|never|no longer)\s+use\s+(an?\s+)?(elevator|lift)\b/i.test(
-    text,
+    foldTypographicMarks(text),
   );
+}
+
+export function mentionsAlarmEquipmentWithoutPerception(utterance: string): boolean {
+  if (PERCEPTION_LIMIT.test(foldTypographicMarks(utterance))) return false;
+  return collectMatches(utterance, ALARM_TERMS).some((match) => !isNegatedMatch(match, "alarm-perception"));
+}
+
+export function mentionsSmokeAlarm(utterance: string): boolean {
+  return collectMatches(utterance, ["smoke alarm"]).some((match) => !isNegatedMatch(match, "alarm-perception"));
 }
 
 export function detectCommMethods(utterance: string): string[] {
@@ -177,7 +192,7 @@ export function detectAmbiguousKinds(
   if (hasHedgedMatch(utterance, SUPPORT_TERMS, "support")) kinds.push("support");
   if (hasHedgedMatch(utterance, ELEVATOR_TERMS, "elevator")) kinds.push("elevator");
   if (hasHedgedMatch(utterance, EXIT_TERMS, "blocked-exit")) kinds.push("blocked-exit");
-  if (hasHedgedMatch(utterance, SHELTER_TERMS, "shelter-access") && !ACCESS_UNRESOLVED.test(utterance)) {
+  if (hasHedgedMatch(utterance, SHELTER_TERMS, "shelter-access") && !hasUnresolvedAccess(utterance)) {
     kinds.push("shelter-access");
   }
   const allowed = new Set(getHazardConfig(hazardId).kinds);
@@ -206,22 +221,45 @@ export function labelForKind(kind: ComplicationKind, evidenceQuote: string): str
 }
 
 function detectShelterAccess(utterance: string): PlanDependency | null {
-  if (!ACCESS_UNRESOLVED.test(utterance)) return null;
-  for (const match of collectMatches(utterance, SHELTER_TERMS)) {
-    return {
-      kind: "shelter-access",
-      label: `Named shelter with unresolved access (${clipLabel(match.snippet)})`,
-      evidenceQuote: match.snippet,
-    };
-  }
-  return null;
+  if (hasResolvedAccessArrangement(utterance) && !hasUnresolvedAccess(utterance)) return null;
+  if (!hasUnresolvedAccess(utterance)) return null;
+  const matches = collectMatches(utterance, SHELTER_TERMS);
+  if (matches.length === 0) return null;
+  const evidenceQuote = excerptForShelterAccess(utterance);
+  return {
+    kind: "shelter-access",
+    label: `Named shelter with unresolved access (${clipLabel(evidenceQuote)})`,
+    evidenceQuote,
+  };
+}
+
+function hasUnresolvedAccess(text: string): boolean {
+  return ACCESS_UNRESOLVED.test(foldTypographicMarks(text));
+}
+
+function hasResolvedAccessArrangement(text: string): boolean {
+  return ACCESS_ARRANGED.test(foldTypographicMarks(text));
+}
+
+function excerptForShelterAccess(utterance: string): string {
+  const text = utterance.replace(/\s+/g, " ").trim();
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const relevant = sentences.filter((sentence) => {
+    const folded = foldTypographicMarks(sentence);
+    return (
+      collectMatches(sentence, SHELTER_TERMS).length > 0 ||
+      ACCESS_UNRESOLVED.test(folded) ||
+      SHELTER_PRONOUN_ACCESS.test(folded)
+    );
+  });
+  return (relevant.length > 0 ? relevant.join(" ") : text).trim();
 }
 
 function detectAlarmPerception(utterance: string): PlanDependency | null {
   if (!PERCEPTION_LIMIT.test(utterance)) return null;
   for (const match of collectMatches(utterance, ALARM_TERMS)) {
     if (PREFIX_NEGATION.test(match.before) && !PERCEPTION_LIMIT.test(match.sentence)) continue;
-    if (/\b(do not|don't|does not|doesn't|did not|didn't|haven'?t|have not)\s+(have|use)\b/i.test(match.before)) {
+    if (/\b(do not|don't|does not|doesn't|did not|didn't|haven't|have not)\s+(have|use)\b/i.test(foldTypographicMarks(match.before))) {
       continue;
     }
     return {
@@ -266,7 +304,7 @@ interface TermMatch {
 
 function collectMatches(utterance: string, terms: string[]): TermMatch[] {
   const text = utterance.replace(/\s+/g, " ").trim();
-  const lower = text.toLowerCase();
+  const lower = foldTypographicMarks(text).toLowerCase();
   const matches: TermMatch[] = [];
   const seen = new Set<number>();
   const sorted = [...terms].sort((a, b) => b.length - a.length);
@@ -285,7 +323,7 @@ function collectMatches(utterance: string, terms: string[]): TermMatch[] {
         sentence,
         before: sentence.slice(0, relative),
         after: sentence.slice(relative + term.length),
-        snippet: clipAround(text, index, term.length),
+        snippet: sentence.trim(),
       });
     }
   }
@@ -297,7 +335,7 @@ function isNegatedMatch(match: TermMatch, kind: ComplicationKind): boolean {
   if (kind === "support" && SUPPORT_FAILURE_AFTER.test(match.sentence)) return true;
   const nearby = lastWords(match.before, 10);
   const withoutPerception = nearby.replace(PERCEPTION_LIMIT, " ");
-  return PREFIX_NEGATION.test(withoutPerception);
+  return PREFIX_NEGATION.test(foldTypographicMarks(withoutPerception));
 }
 
 function lastWords(text: string, count: number): string {
@@ -331,7 +369,7 @@ export function detectOtherPlanningTasks(utterance: string): { kind: Complicatio
   const sentences = text.split(/(?<=[.!?])\s+/);
   for (const sentence of sentences) {
     if (
-      /\b(haven'?t|have not|not yet|still need to)\b/i.test(sentence) &&
+      /\b(haven't|have not|not yet|still need to)\b/i.test(foldTypographicMarks(sentence)) &&
       /\b(another|other|second)\b/i.test(sentence) &&
       /\b(support person|support network|backup person|contact)\b/i.test(sentence)
     ) {
@@ -339,12 +377,6 @@ export function detectOtherPlanningTasks(utterance: string): { kind: Complicatio
     }
   }
   return tasks;
-}
-
-function clipAround(text: string, index: number, termLength: number): string {
-  const start = Math.max(0, index - 28);
-  const end = Math.min(text.length, index + termLength + 32);
-  return text.slice(start, end).trim();
 }
 
 function clipLabel(text: string): string {

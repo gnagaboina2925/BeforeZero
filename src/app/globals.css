@@ -1113,6 +1113,32 @@ html[data-motion="reduce"] .sim-light {
   gap: 0.45rem 0.85rem;
 }
 
+.plan-dependency-list {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.plan-dependency-list .check-row {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.plan-dependency-list .check-row span {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.45;
+}
+
 .a11y-check {
   display: flex;
   gap: 0.45rem;

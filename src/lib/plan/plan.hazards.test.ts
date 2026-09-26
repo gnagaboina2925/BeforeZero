@@ -65,6 +65,50 @@ describe("evidence-supported complication selection", () => {
     assert.equal(detectDependenciesFromText(text, "home-fire").some((item) => item.kind === "alarm-perception"), false);
   });
 
+  it("keeps naming a smoke alarm distinct from describing a perception concern", () => {
+    const text = "My planned exit is the front door. I have a smoke alarm.";
+    const fallback = fallbackPlanInterpretation(text, "home-fire");
+    assert.deepEqual(
+      fallback.dependencies.map((item) => item.kind),
+      ["blocked-exit"],
+    );
+    assert.equal(fallback.dependencies.some((item) => item.kind === "alarm-perception"), false);
+    const alarm = fallback.observations.find((item) => item.topic === "alarm");
+    const exit = fallback.observations.find((item) => item.topic === "exit");
+    assert.equal(exit?.status, "mentioned");
+    assert.equal(alarm?.status, "not-mentioned");
+    assert.equal(
+      alarm?.note,
+      "You mentioned a smoke alarm but did not describe difficulty noticing its signal.",
+    );
+    assert.equal(/suitable|verified|working/i.test(alarm?.note ?? ""), false);
+    const sanitized = sanitizePlanInterpretation(
+      {
+        summary: "You named the front door and a smoke alarm.",
+        observations: [
+          {
+            topic: "alarm",
+            status: "not-mentioned",
+            evidenceQuote: null,
+            note: "alarm signals were not mentioned. That is not the same as deciding they are unneeded.",
+          },
+        ],
+        dependencies: [],
+        gaps: [],
+        clarification: null,
+      },
+      text,
+      0,
+      "home-fire",
+    );
+    assert.ok(sanitized.dependencies.some((item) => item.kind === "blocked-exit"));
+    assert.equal(sanitized.dependencies.some((item) => item.kind === "alarm-perception"), false);
+    assert.equal(
+      sanitized.observations.find((item) => item.topic === "alarm")?.note,
+      "You mentioned a smoke alarm but did not describe difficulty noticing its signal.",
+    );
+  });
+
   it("selects alarm-perception only when the user says they may not perceive it", () => {
     const text = "I have a smoke alarm I may not hear.";
     const deps = detectDependenciesFromText(text, "home-fire");
@@ -91,6 +135,80 @@ describe("evidence-supported complication selection", () => {
   it("does not treat a named basement without an access gap as shelter-access", () => {
     const text = "During a warning I go to the basement away from windows.";
     assert.equal(detectDependenciesFromText(text, "tornado").some((item) => item.kind === "shelter-access"), false);
+    assert.equal(
+      detectDependenciesFromText("My shelter is the basement", "tornado").some((item) => item.kind === "shelter-access"),
+      false,
+    );
+  });
+
+  it("does not treat arranged basement access as unresolved", () => {
+    const text = "I have arranged how to reach the basement.";
+    assert.equal(detectDependenciesFromText(text, "tornado").some((item) => item.kind === "shelter-access"), false);
+  });
+
+  it("keeps hedged basement wording subject to confirmation", () => {
+    const text = "I might go to the basement.";
+    const fallback = fallbackPlanInterpretation(text, "tornado");
+    assert.equal(fallback.dependencies.some((item) => item.kind === "shelter-access"), false);
+    assert.ok(fallback.ambiguousKinds.includes("shelter-access"));
+  });
+
+  it("recognizes named basement plus unresolved access, including a pronoun and typographic apostrophe", () => {
+    const text =
+      "I get warnings on my phone. My neighbor is my planned support person. My shelter is the basement, but I haven’t arranged how to reach it.";
+    const fallback = fallbackPlanInterpretation(text, "tornado");
+    assert.deepEqual(
+      fallback.dependencies.map((item) => item.kind).sort(),
+      ["communication", "shelter-access", "support"],
+    );
+    const access = fallback.observations.find((item) => item.topic === "access");
+    assert.equal(access?.status, "mentioned");
+    assert.equal(
+      fallback.dependencies.find((item) => item.kind === "shelter-access")?.evidenceQuote,
+      "My shelter is the basement, but I haven’t arranged how to reach it.",
+    );
+    assert.equal(
+      fallback.dependencies.find((item) => item.kind === "communication")?.evidenceQuote,
+      "I get warnings on my phone.",
+    );
+    assert.equal(
+      fallback.dependencies.find((item) => item.kind === "support")?.evidenceQuote,
+      "My neighbor is my planned support person.",
+    );
+    const split =
+      "I get warnings on my phone. My neighbor is my planned support person. My shelter is the basement. I haven’t arranged how to reach it.";
+    assert.ok(detectDependenciesFromText(split, "tornado").some((item) => item.kind === "shelter-access"));
+  });
+
+  it("keeps observations and shelter-access checkboxes aligned when Grok marks access not-planned", () => {
+    const text =
+      "I get warnings on my phone. My neighbor is my planned support person. My shelter is the basement, but I haven’t arranged how to reach it.";
+    const sanitized = sanitizePlanInterpretation(
+      {
+        summary: "You named alerts, a neighbor, and unplanned basement access.",
+        observations: [
+          {
+            topic: "access",
+            status: "not-planned",
+            evidenceQuote: "I haven’t arranged how to reach it",
+            note: "unplanned",
+          },
+        ],
+        dependencies: [],
+        gaps: [],
+        clarification: null,
+      },
+      text,
+      0,
+      "tornado",
+    );
+    assert.deepEqual(
+      sanitized.dependencies.map((item) => item.kind).sort(),
+      ["communication", "shelter-access", "support"],
+    );
+    assert.equal(sanitized.observations.find((item) => item.topic === "access")?.status, "mentioned");
+    assert.equal(sanitized.observations.find((item) => item.topic === "alerts")?.status, "mentioned");
+    assert.equal(sanitized.observations.find((item) => item.topic === "support")?.status, "mentioned");
   });
 
   it("does not treat negated support as a home-fire support dependency", () => {

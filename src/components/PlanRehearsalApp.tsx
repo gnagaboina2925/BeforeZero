@@ -456,7 +456,7 @@ export function PlanRehearsalApp({ hazardId }: { hazardId: PlanHazardId }) {
               </li>
             ))}
           </ul>
-          <fieldset className="a11y-fieldset">
+          <fieldset className="a11y-fieldset plan-dependency-list">
             <legend>Dependencies from your words</legend>
             {hazard.dependencyChoices.map((choice) => {
               const detected = interpretation.dependencies.some((item) => item.kind === choice.id);
@@ -566,7 +566,7 @@ export function PlanRehearsalApp({ hazardId }: { hazardId: PlanHazardId }) {
         <div className="sim-card">
           <h2 className="section-heading">{REHEARSAL_CHOICE_PROMPT}</h2>
           <p className="result-note">This run explores one complication. Choose the part to rehearse now.</p>
-          <fieldset className="a11y-fieldset">
+          <fieldset className="a11y-fieldset plan-dependency-list">
             <legend className="sr-only">{REHEARSAL_CHOICE_PROMPT}</legend>
             {rehearsalKinds(confirmed.dependencies, hazard.kinds).map((kind) => (
               <label key={kind} className="check-row">

@@ -1,5 +1,5 @@
 import { LESSON_SOURCES } from "../lesson/sources.ts";
-import { detectCommMethods, detectOtherPlanningTasks } from "./detect.ts";
+import { detectCommMethods, detectOtherPlanningTasks, foldTypographicMarks } from "./detect.ts";
 import { complicationCopy } from "./hazards.ts";
 import type { ComplicationKind, PlanChoice, PlanHazardId, RevisedPlanReview } from "./types.ts";
 
@@ -193,7 +193,7 @@ function namesSupportTask(text: string): boolean {
 }
 
 function namesSecondSupport(original: string, revised: string): boolean {
-  if (STILL_UNRESOLVED.test(revised)) return false;
+  if (STILL_UNRESOLVED.test(foldTypographicMarks(revised))) return false;
   return /\b(another|other|second|network|registry|list of|more than one)\b/i.test(revised) && revised.trim() !== original.trim();
 }
 
