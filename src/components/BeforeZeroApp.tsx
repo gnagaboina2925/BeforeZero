@@ -11,9 +11,7 @@ import {
   getDependentSteps,
   getQuestion,
   priorAnswersForStep,
-  PRODUCT_NAME,
   STEP_ORDER,
-  TAGLINE,
 } from "@/lib/scenario";
 import type {
   Answers,
@@ -318,13 +316,7 @@ export function BeforeZeroApp() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="app-header no-print">
-        <p className="brand">{PRODUCT_NAME}</p>
-        <p className="brand-tag">{TAGLINE}</p>
-      </header>
-
-      <main className="app-main">
+      <main id="main-content" className="app-main" tabIndex={-1}>
         <div className="panel">
           {screen === "welcome" && (
             <WelcomeScreen
@@ -370,6 +362,5 @@ export function BeforeZeroApp() {
           )}
         </div>
       </main>
-    </div>
   );
 }

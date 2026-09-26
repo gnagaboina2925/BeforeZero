@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --experimental-detect-module --test src/lib/interpret.test.ts src/lib/xai.test.ts src/lib/diagnostics.test.ts src/lib/voice.test.ts src/lib/scenario.test.ts src/lib/evaluate.test.ts src/lib/sceneAssets.test.ts",
-    "generate:scenes": "node --experimental-strip-types --experimental-detect-module scripts/generate-scenes.ts"
+    "test": "node --experimental-strip-types --experimental-detect-module --test src/lib/interpret.test.ts src/lib/xai.test.ts src/lib/diagnostics.test.ts src/lib/voice.test.ts src/lib/scenario.test.ts src/lib/evaluate.test.ts src/lib/sceneAssets.test.ts src/lib/simulation/reducer.test.ts src/lib/simulation/interpret.test.ts src/lib/a11y/preferences.test.ts src/lib/lesson/player.test.ts src/lib/lesson/interpret.test.ts src/lib/lesson/media.test.ts src/lib/lesson/catalog.test.ts src/lib/nws/client.test.ts src/lib/learn/cases.test.ts",
+    "generate:scenes": "node --experimental-strip-types --experimental-detect-module scripts/generate-scenes.ts",
+    "generate:lesson-media": "node --experimental-strip-types --experimental-detect-module scripts/generate-lesson-media.ts",
+    "generate:lesson-narration": "node --experimental-strip-types --experimental-detect-module scripts/generate-lesson-media.ts --narration-only --changed-only"
   },
   "dependencies": {
     "next": "16.3.6",

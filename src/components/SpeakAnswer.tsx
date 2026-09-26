@@ -30,6 +30,9 @@ interface SpeakAnswerProps {
   typedAnswer: string;
   disabled: boolean;
   onTranscript: (transcript: string) => void;
+  speakLabel?: string;
+  transcriptHint?: string;
+  onRecordingStart?: () => void;
 }
 
 export function SpeakAnswer({
@@ -37,6 +40,9 @@ export function SpeakAnswer({
   typedAnswer,
   disabled,
   onTranscript,
+  speakLabel = "Speak my answer",
+  transcriptHint = "Transcript added. Review it, then check your answer.",
+  onRecordingStart,
 }: SpeakAnswerProps) {
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -167,7 +173,7 @@ export function SpeakAnswer({
       }
 
       onTranscript(clipped);
-      setStatus("Transcript added. Review it, then check your answer.");
+      setStatus(transcriptHint);
     } catch {
       if (isStaleVoiceResult(generation, generationRef.current)) return;
       setError("Speech transcription is unavailable right now. You can type your answer instead.");
@@ -185,6 +191,7 @@ export function SpeakAnswer({
     setError(null);
     setPendingTranscript(null);
     setStatus(null);
+    onRecordingStart?.();
 
     const mimeType = pickRecorderMimeType();
     if (mimeType === null) {
@@ -256,7 +263,7 @@ export function SpeakAnswer({
     if (!pendingTranscript) return;
     onTranscript(pendingTranscript);
     setPendingTranscript(null);
-    setStatus("Transcript added. Review it, then check your answer.");
+    setStatus(transcriptHint);
   }
 
   function keepTyped() {
@@ -284,7 +291,7 @@ export function SpeakAnswer({
             }}
             disabled={disabled || busy}
           >
-            Speak my answer
+            {speakLabel}
           </button>
         )}
         {recording ? (

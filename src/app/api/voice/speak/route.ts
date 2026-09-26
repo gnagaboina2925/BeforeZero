@@ -1,5 +1,5 @@
 import { apiKeyPresent, classifyHttpFailure, publicMessage } from "@/lib/diagnostics";
-import { parseVoiceContext, TTS_URL, ttsVoice, VOICE_TIMEOUT_MS } from "@/lib/voice";
+import { parseSpeakRequest, TTS_URL, ttsVoice, VOICE_TIMEOUT_MS } from "@/lib/voice";
 import { ProviderRequestError, publicInterpretError } from "@/lib/xai";
 import { NextResponse } from "next/server";
 
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const parsed = parseVoiceContext(body);
+  const parsed = parseSpeakRequest(body);
   if (!parsed.ok) {
     return jsonError({ code: "invalid_request", message: parsed.message });
   }

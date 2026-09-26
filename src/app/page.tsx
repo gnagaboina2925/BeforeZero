@@ -1,5 +1,11 @@
-import { BeforeZeroApp } from "@/components/BeforeZeroApp";
+import { HomeLanding } from "@/components/HomeLanding";
 
 export default function Home() {
-  return <BeforeZeroApp />;
+  return (
+    <main id="main-content" className="app-main">
+      <div className="panel">
+        <HomeLanding />
+      </div>
+    </main>
+  );
 }

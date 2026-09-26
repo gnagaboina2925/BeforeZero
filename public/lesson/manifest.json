@@ -1,0 +1,159 @@
+{
+  "lessonId": "hurricane-flood-1",
+  "videoModel": "grok-imagine-video-1.5",
+  "videoStatus": "ready",
+  "generatedAt": "2026-09-26T16:02:01.630Z",
+  "clips": {
+    "watch": {
+      "requestId": "bedc0e7f-041b-92c2-9111-4b9184924124",
+      "sourceFile": "source/watch.mp4",
+      "stillFile": "stills/watch.jpg",
+      "status": "saved",
+      "diagnostic": null
+    },
+    "street": {
+      "requestId": "b5976902-8cff-9c18-9400-9b590fd94c93",
+      "sourceFile": "source/street.mp4",
+      "stillFile": "stills/street.jpg",
+      "status": "saved",
+      "diagnostic": null
+    },
+    "flood": {
+      "requestId": "4bea13f1-0ea5-911e-95d8-ed5141c50635",
+      "sourceFile": "source/flood.mp4",
+      "stillFile": "stills/flood.jpg",
+      "status": "saved",
+      "diagnostic": null
+    },
+    "interior": {
+      "requestId": "0d5d77d4-5e92-91b4-9743-6f75da37d06f",
+      "sourceFile": "source/interior.mp4",
+      "stillFile": "stills/interior.jpg",
+      "status": "saved",
+      "diagnostic": null
+    }
+  },
+  "beats": {
+    "intro": {
+      "video": "muxed/intro.mp4",
+      "audio": "audio/intro.mp3",
+      "captions": "captions/intro.vtt",
+      "still": "stills/watch.jpg",
+      "visualSource": "watch",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "8b8166d9",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "teach-prep": {
+      "video": "muxed/teach-prep.mp4",
+      "audio": "audio/teach-prep.mp3",
+      "captions": "captions/teach-prep.vtt",
+      "still": "stills/watch.jpg",
+      "visualSource": "watch",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "402d1d9c",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "demo-alerts": {
+      "video": "muxed/demo-alerts.mp4",
+      "audio": "audio/demo-alerts.mp3",
+      "captions": "captions/demo-alerts.vtt",
+      "still": "stills/watch.jpg",
+      "visualSource": "watch",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "103b02c5",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "teach-wind": {
+      "video": "muxed/teach-wind.mp4",
+      "audio": "audio/teach-wind.mp3",
+      "captions": "captions/teach-wind.vtt",
+      "still": "stills/interior.jpg",
+      "visualSource": "interior",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "80b2ec3c",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "teach-street": {
+      "video": "muxed/teach-street.mp4",
+      "audio": "audio/teach-street.mp3",
+      "captions": "captions/teach-street.vtt",
+      "still": "stills/street.jpg",
+      "visualSource": "street",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f1f24dfb",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "demo-street": {
+      "video": "muxed/demo-street.mp4",
+      "audio": "audio/demo-street.mp3",
+      "captions": "captions/demo-street.vtt",
+      "still": "stills/street.jpg",
+      "visualSource": "street",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "b724fedf",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "rain-decision": {
+      "video": "muxed/rain-decision.mp4",
+      "audio": "audio/rain-decision.mp3",
+      "captions": "captions/rain-decision.vtt",
+      "still": "stills/street.jpg",
+      "visualSource": "street",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "a3dbc977",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "teach-indoor-flood": {
+      "video": "muxed/teach-indoor-flood.mp4",
+      "audio": "audio/teach-indoor-flood.mp3",
+      "captions": "captions/teach-indoor-flood.vtt",
+      "still": "stills/flood.jpg",
+      "visualSource": "flood",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "f7480bb2",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "demo-indoor": {
+      "video": "muxed/demo-indoor.mp4",
+      "audio": "audio/demo-indoor.mp3",
+      "captions": "captions/demo-indoor.vtt",
+      "still": "stills/interior.jpg",
+      "visualSource": "interior",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "a7f09873",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "flood-decision": {
+      "video": "muxed/flood-decision.mp4",
+      "audio": "audio/flood-decision.mp3",
+      "captions": "captions/flood-decision.vtt",
+      "still": "stills/interior.jpg",
+      "visualSource": "interior",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "5072e291",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    },
+    "debrief": {
+      "video": "muxed/debrief.mp4",
+      "audio": "audio/debrief.mp3",
+      "captions": "captions/debrief.vtt",
+      "still": "stills/watch.jpg",
+      "visualSource": "watch",
+      "muxStatus": "ready",
+      "narrationStatus": "current",
+      "narrationFingerprint": "b52bb740",
+      "note": "Generated practice clip with current muxed narration. Not documentary footage."
+    }
+  }
+}

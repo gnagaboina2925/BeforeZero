@@ -5,6 +5,7 @@ import {
   isAllowedAudioType,
   isStaleVoiceResult,
   MAX_VOICE_BYTES,
+  parseSpeakRequest,
   parseVoiceContext,
   readTranscriptText,
   validateVoiceUpload,
@@ -126,6 +127,15 @@ describe("parseVoiceContext", () => {
       stepId: "not-a-step",
     });
     assert.equal(parsed.ok, false);
+  });
+
+  it("speaks raw narration text for the simulation", () => {
+    const parsed = parseSpeakRequest({
+      text: "This is a practice scenario. The power has just gone out.",
+    });
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) return;
+    assert.match(parsed.spokenText, /practice scenario/);
   });
 });
 

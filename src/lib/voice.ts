@@ -72,6 +72,8 @@ export function readTranscriptText(payload: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+const MAX_NARRATION_LENGTH = 2000;
+
 export function parseVoiceContext(
   body: unknown,
 ):
@@ -96,6 +98,27 @@ export function parseVoiceContext(
     question,
     spokenText: spokenQuestionText(question),
   };
+}
+
+export function parseSpeakRequest(
+  body: unknown,
+): { ok: true; spokenText: string } | { ok: false; message: string } {
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+    if (typeof record.text === "string") {
+      const spokenText = record.text.trim();
+      if (!spokenText) {
+        return { ok: false, message: "Include text to speak." };
+      }
+      if (spokenText.length > MAX_NARRATION_LENGTH) {
+        return { ok: false, message: "Keep narration shorter." };
+      }
+      return { ok: true, spokenText };
+    }
+  }
+  const parsed = parseVoiceContext(body);
+  if (!parsed.ok) return parsed;
+  return { ok: true, spokenText: parsed.spokenText };
 }
 
 export function sttModel(): string {

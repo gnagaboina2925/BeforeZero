@@ -1,8 +1,16 @@
 # BeforeZero
 
-Interactive household emergency rehearsal. Tagline: **Practice before it matters.**
+Accessible emergency-learning website. Tagline: **Practice before it matters.**
 
-This is a scripted prototype. You can type or speak an answer, then have Grok map it onto an existing listed choice. It is not live emergency guidance.
+Three on-site paths:
+
+1. **Learn** (`/learn`) — two sourced U.S. storm case studies from NHC and FEMA records.
+2. **Practice** (`/practice`) — one captioned hurricane/flooding lesson. Video has not been generated; stills are labeled fallbacks. Secondary: `/simulate` (blackout) and `/practice/rehearsal` (five-step household rehearsal).
+3. **Alerts** (`/alerts`) — on-demand National Weather Service active alerts for a U.S. place you confirm. Not a notification or dispatch service. Browser geolocation is not requested.
+
+Display and listening options (text size, contrast, captions, narration controls, reduced motion) do not ask for a disability. This project does not claim WCAG certification.
+
+This is a scripted prototype. It is not live emergency guidance.
 
 ## Getting started
 
@@ -25,7 +33,7 @@ XAI_MODEL=grok-4.3
 XAI_IMAGE_MODEL=grok-imagine-image-2.0
 ```
 
-- `XAI_API_KEY` is required for “Check my answer”, “Speak my answer”, “Listen to question”, and local scene generation. Keep it server-side. Do not prefix it with `NEXT_PUBLIC_`.
+- `XAI_API_KEY` is required for interpretation, optional alert explanation, “Speak my answer”, “Listen”, and local scene generation. Keep it server-side. Do not prefix it with `NEXT_PUBLIC_`.
 - `XAI_MODEL` is optional. The default is `grok-4.3`, the currently listed economical Grok text model on xAI’s model pricing page. Override it if you want a different supported text model.
 - `XAI_IMAGE_MODEL` is optional. The default is `grok-imagine-image-2.0`, the documented Grok Imagine image model.
 
@@ -52,9 +60,12 @@ npm run lint
 npm run test
 npm run build
 npm run generate:scenes
+npm run generate:lesson-narration
 ```
 
 Automated tests mock the provider and do not spend API credits. `npm run generate:scenes` is the only command that creates Grok Imagine stills. It is not run during `dev`, `build`, or user interactions.
+
+`npm run generate:lesson-narration` regenerates only changed Grok Voice scripts and remuxes existing Imagine clips. It does not start Imagine jobs. The Practice UI does not show script hashes or regeneration commands. Until hashes match the current teaching script, the lesson shows “Updated narration is being prepared. Text guidance is available.” and does not play leftover audio.
 
 ## Grok Imagine scene illustrations
 
@@ -91,6 +102,13 @@ Reviewed URLs:
 - Make a Plan: https://www.ready.gov/plan (page last updated 09/01/2026)
 - Build a Kit: https://www.ready.gov/kit (page last updated 07/01/2026)
 - Emergency Alerts: https://www.ready.gov/alerts (page last updated 05/27/2026)
+- Hurricanes: https://www.ready.gov/hurricanes (page last updated 09/24/2026)
+- Floods: https://www.ready.gov/floods
+- NWS API Web Service: https://www.weather.gov/documentation/services-web-api (updated 3/24/2026)
+- Census Geocoding Services API: https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html
+- NHC Harvey 2017 archive: https://www.nhc.noaa.gov/archive/2017/HARVEY.shtml
+- NHC Tropical Cyclone Report Ian AL092022: https://www.nhc.noaa.gov/data/tcr/AL092022_Ian.pdf
+- FEMA DR-4332: https://www.fema.gov/disaster/4332
 
 The former path `https://www.ready.gov/family-emergency-communication-plan` returned 404 at review time; family communication content is cited from Make a Plan.
 
