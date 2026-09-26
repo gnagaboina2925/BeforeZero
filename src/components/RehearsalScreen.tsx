@@ -106,6 +106,7 @@ export function RehearsalScreen({
                 />
                 <span className="option-copy">
                   <span className="option-title">{choice.label}</span>
+                  {choice.hint ? <span className="option-help">{choice.hint}</span> : null}
                 </span>
               </label>
             );

@@ -207,6 +207,13 @@ describe("buildInterpretationPrompt mapping quality", () => {
     assert.match(prompt.instructions, /Do not list, recap, or quote the permitted choices/i);
     assert.match(prompt.instructions, /only the missing fact/i);
   });
+
+  it("does not present candles as recommended lighting", () => {
+    const prompt = buildInterpretationPrompt(lighting, "I have candles and matches.");
+    assert.match(prompt.instructions, /Do not treat candles as recommended lighting/i);
+    assert.match(prompt.userContent, /candles: Candles, matches/);
+    assert.match(prompt.userContent, /not candles/);
+  });
 });
 
 describe("isFreshInterpretation", () => {

@@ -71,6 +71,22 @@ describe("communication backup branches", () => {
     assert.match(roommatesSupplies.choices.find((choice) => choice.id === "known-kit")?.label ?? "", /we keep/);
   });
 
+  it("marks candles as a reported option, not recommended lighting", () => {
+    const candles = getQuestion("lighting", "alone", {}).choices.find((choice) => choice.id === "candles");
+    assert.match(candles?.hint ?? "", /not candles/);
+    assert.match(candles?.preparationTask ?? "", /does not list candles/);
+  });
+
+  it("qualifies meeting-place wording so it is not a travel instruction", () => {
+    const question = getQuestion("commBackup", "family", {
+      lighting: "known-flashlight",
+      contact: "phone",
+    });
+    const meeting = question.choices.find((choice) => choice.id === "meeting-place");
+    assert.match(meeting?.label ?? "", /officials have not directed otherwise/);
+    assert.match(meeting?.hint ?? "", /not a direction to travel/);
+  });
+
   it("clears comm backup when lighting or contact changes", () => {
     assert.deepEqual(getDependentSteps("lighting"), ["commBackup"]);
     assert.deepEqual(getDependentSteps("contact"), ["commBackup"]);

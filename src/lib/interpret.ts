@@ -21,6 +21,7 @@ export const INTERPRETATION_MAPPING_RULES = [
   "An explicit current statement such as 'My flashlight is in the kitchen drawer' may match the known-location lighting choice when that choice's full criteria are satisfied.",
   "If the answer names a source or place but not whether it is already set up, set matchedChoiceId to null.",
   "Clarification must be one short, conversational question about only the missing fact. Do not list, recap, or quote the permitted choices. Example: 'Is your flashlight already in the kitchen, or is that something you plan to arrange?'",
+  "Mapping a candle answer to the candles choice records what the user said. Do not treat candles as recommended lighting.",
 ];
 
 export function isHouseholdId(value: unknown): value is HouseholdId {
@@ -184,7 +185,11 @@ export function buildInterpretationPrompt(
   clarificationExchange?: ClarificationExchange,
 ) {
   const choices = question.choices
-    .map((choice) => `- ${choice.id}: ${choice.label}`)
+    .map((choice) =>
+      choice.hint
+        ? `- ${choice.id}: ${choice.label} (${choice.hint})`
+        : `- ${choice.id}: ${choice.label}`,
+    )
     .join("\n");
 
   const instructions = [

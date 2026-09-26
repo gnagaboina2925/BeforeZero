@@ -1,8 +1,15 @@
 "use client";
 
 import { PracticeScene } from "@/components/PracticeScene";
+import {
+  PLANS_REPORTED_HEADING,
+  type BackupRetryComparison,
+} from "@/lib/evaluate";
+import {
+  PREPARATION_RESOURCES,
+  RESOURCES_DISCLAIMER,
+} from "@/lib/guidance";
 import { householdLabel, PRACTICE_DISCLAIMER, PRODUCT_NAME } from "@/lib/scenario";
-import type { BackupRetryComparison } from "@/lib/evaluate";
 import type { HouseholdId, RehearsalResults } from "@/lib/types";
 
 interface ResultsScreenProps {
@@ -12,6 +19,146 @@ interface ResultsScreenProps {
   onPracticeAgain: () => void;
   onRetryBackupMoment: () => void;
   onEditHousehold: () => void;
+}
+
+function RehearsalTakeaways({
+  results,
+  retryComparison,
+  mode,
+}: {
+  results: RehearsalResults;
+  retryComparison: BackupRetryComparison | null;
+  mode: "screen" | "print";
+}) {
+  const print = mode === "print";
+  const titleClass = print ? undefined : "section-heading";
+  const bodyClass = print ? undefined : "result-body";
+  const emptyClass = print ? undefined : "result-empty";
+
+  return (
+    <>
+      <div className={print ? undefined : "result-block"}>
+        <h2 className={titleClass}>What this rehearsal revealed</h2>
+        {results.phoneDependent ? (
+          <p className={bodyClass}>
+            Your lighting and communication choices both depended on a phone.
+          </p>
+        ) : (
+          <p className={bodyClass}>
+            Lighting and communication did not both depend on a phone in this
+            practice.
+          </p>
+        )}
+        {results.backupStatusLine ? (
+          <p className={bodyClass}>{results.backupStatusLine}</p>
+        ) : null}
+        {results.meetingConflictNote ? (
+          <p className={bodyClass}>{results.meetingConflictNote}</p>
+        ) : null}
+      </div>
+
+      {retryComparison ? (
+        <div className={print ? undefined : "result-block"}>
+          <h2 className={titleClass}>Retry comparison</h2>
+          {print ? (
+            <>
+              <p>First response: {retryComparison.firstLabel}</p>
+              <p>Revised response: {retryComparison.revisedLabel}</p>
+              <p>{retryComparison.summary}</p>
+            </>
+          ) : (
+            <>
+              <p className="result-title">First response</p>
+              <p className="result-body">{retryComparison.firstLabel}</p>
+              <p className="result-title">Revised response</p>
+              <p className="result-body">{retryComparison.revisedLabel}</p>
+              <p className="result-body">{retryComparison.summary}</p>
+              {retryComparison.gapFullyResolved &&
+              !retryComparison.firstIdentified &&
+              retryComparison.revisedIdentified ? (
+                <p className="result-body">
+                  A previously unanswered backup is now identified.
+                </p>
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
+
+      <div className={print ? undefined : "result-block"}>
+        <h2 className={titleClass}>Details to prepare</h2>
+        {results.detailsToPrepare.length === 0 ? (
+          <p className={emptyClass}>No preparation follow-ups were generated for these answers.</p>
+        ) : print ? (
+          <ul>
+            {results.detailsToPrepare.map((item) => (
+              <li key={item.stepId}>
+                <strong>{item.choice.label}</strong>
+                <div>{item.task}</div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="result-list">
+            {results.detailsToPrepare.map((item) => (
+              <li key={item.stepId}>
+                <p className="result-title">{item.choice.label}</p>
+                <p className="result-body">{item.task}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className={print ? undefined : "result-block"}>
+        <h2 className={titleClass}>{PLANS_REPORTED_HEADING}</h2>
+        {results.plansIdentified.length === 0 ? (
+          <p className={emptyClass}>No plans or resources were reported in this practice.</p>
+        ) : print ? (
+          <ul>
+            {results.plansIdentified.map((item) => (
+              <li key={item.stepId}>
+                {item.questionTitle}: {item.choice.label}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="result-list">
+            {results.plansIdentified.map((item) => (
+              <li key={item.stepId}>
+                <p className="result-title">{item.questionTitle}</p>
+                <p className="result-body">{item.choice.label}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className={print ? undefined : "result-block"}>
+        <h2 className={titleClass}>Preparation resources</h2>
+        <p className={bodyClass}>{RESOURCES_DISCLAIMER}</p>
+        {print ? (
+          <ul>
+            {PREPARATION_RESOURCES.map((item) => (
+              <li key={item.url}>
+                {item.title}: {item.url}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="result-list resource-list">
+            {PREPARATION_RESOURCES.map((item) => (
+              <li key={item.url}>
+                <a className="resource-link" href={item.url} rel="noopener noreferrer" target="_blank">
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
 }
 
 export function ResultsScreen({
@@ -33,54 +180,11 @@ export function ResultsScreen({
         <h1>Preparation card</h1>
         <p>Household: {householdLabel(household)}</p>
         <p>Practice notes reflect your answers, not verified preparedness.</p>
-
-        <h2>What this rehearsal revealed</h2>
-        {results.phoneDependent ? (
-          <p>Your lighting and communication choices both depended on a phone.</p>
-        ) : (
-          <p>Lighting and communication did not both depend on a phone in this practice.</p>
-        )}
-        {results.backupIdentified && results.backupLabel ? (
-          <p>Backup identified in practice: {results.backupLabel}</p>
-        ) : results.backupUnanswered ? (
-          <p>This backup is unanswered in practice.</p>
-        ) : null}
-
-        <h2>Details to prepare</h2>
-        {results.detailsToPrepare.length === 0 ? (
-          <p>No unanswered details were selected in this practice.</p>
-        ) : (
-          <ul>
-            {results.detailsToPrepare.map((item) => (
-              <li key={item.stepId}>
-                <strong>{item.choice.label}</strong>
-                <div>{item.task}</div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <h2>Existing preparation</h2>
-        {results.plansIdentified.length === 0 ? (
-          <p>No existing plans were selected in this practice.</p>
-        ) : (
-          <ul>
-            {results.plansIdentified.map((item) => (
-              <li key={item.stepId}>
-                {item.questionTitle}: {item.choice.label}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {retryComparison ? (
-          <>
-            <h2>Retry comparison</h2>
-            <p>First response: {retryComparison.firstLabel}</p>
-            <p>Revised response: {retryComparison.revisedLabel}</p>
-            <p>{retryComparison.summary}</p>
-          </>
-        ) : null}
+        <RehearsalTakeaways
+          results={results}
+          retryComparison={retryComparison}
+          mode="print"
+        />
       </section>
 
       <section className="screen-split animate-in no-print" aria-labelledby="results-heading">
@@ -98,80 +202,11 @@ export function ResultsScreen({
             Practice notes reflect your answers, not verified preparedness.
           </p>
 
-          <div className="result-block">
-            <h2 className="section-heading">What this rehearsal revealed</h2>
-            {results.phoneDependent ? (
-              <p className="result-body">
-                Your lighting and communication choices both depended on a phone.
-              </p>
-            ) : (
-              <p className="result-body">
-                Lighting and communication did not both depend on a phone in this
-                practice.
-              </p>
-            )}
-            {results.backupIdentified && results.backupLabel ? (
-              <p className="result-body">
-                Backup identified in practice: {results.backupLabel}
-              </p>
-            ) : results.backupUnanswered ? (
-              <p className="result-body">This backup is unanswered in practice.</p>
-            ) : (
-              <p className="result-empty">No communication backup step was recorded.</p>
-            )}
-          </div>
-
-          {retryComparison ? (
-            <div className="result-block">
-              <h2 className="section-heading">Retry comparison</h2>
-              <p className="result-title">First response</p>
-              <p className="result-body">{retryComparison.firstLabel}</p>
-              <p className="result-title">Revised response</p>
-              <p className="result-body">{retryComparison.revisedLabel}</p>
-              <p className="result-body">{retryComparison.summary}</p>
-              {!retryComparison.firstIdentified && retryComparison.revisedIdentified ? (
-                <p className="result-body">
-                  A previously unanswered backup is now identified.
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="result-block">
-            <h2 className="section-heading">Details to prepare</h2>
-            {results.detailsToPrepare.length === 0 ? (
-              <p className="result-empty">
-                No unanswered details were selected in this practice.
-              </p>
-            ) : (
-              <ul className="result-list">
-                {results.detailsToPrepare.map((item) => (
-                  <li key={item.stepId}>
-                    <p className="result-title">{item.choice.label}</p>
-                    <p className="result-body">{item.task}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="result-block">
-            <h2 className="section-heading">Plans you identified</h2>
-            {results.plansIdentified.length === 0 ? (
-              <p className="result-empty">
-                No existing plans were selected in this practice.
-              </p>
-            ) : (
-              <ul className="result-list">
-                {results.plansIdentified.map((item) => (
-                  <li key={item.stepId}>
-                    <p className="result-title">{item.questionTitle}</p>
-                    <p className="result-body">{item.choice.label}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <RehearsalTakeaways
+            results={results}
+            retryComparison={retryComparison}
+            mode="screen"
+          />
 
           <div className="action-row">
             {results.phoneDependent ? (

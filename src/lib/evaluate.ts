@@ -16,6 +16,12 @@ function defaultPreparationTask(household: HouseholdId): string {
     : "Decide this detail with your household and write it down.";
 }
 
+export const PLANS_REPORTED_HEADING = "Plans and resources you reported";
+export const MEETING_CONFLICT_STATUS =
+  "Backup approach selected; meeting location still unresolved";
+export const MEETING_CONFLICT_NOTE =
+  "You selected a meeting place as a backup, but also marked that location as unresolved. Ready.gov suggests agreeing on a familiar, easy-to-find place in advance. Use it only if conditions allow and officials have not directed otherwise.";
+
 export interface BackupRetryComparison {
   firstLabel: string;
   revisedLabel: string;
@@ -23,6 +29,14 @@ export interface BackupRetryComparison {
   revisedIdentified: boolean;
   unchanged: boolean;
   summary: string;
+  gapFullyResolved: boolean;
+}
+
+const MEETING_BACKUP_ID = "meeting-place";
+const MEETING_LOCATION_GAP_ID = "meeting-if-separated";
+
+export function isMeetingLocationConflict(answers: Answers): boolean {
+  return answers.commBackup === MEETING_BACKUP_ID && answers.openDetail === MEETING_LOCATION_GAP_ID;
 }
 
 function backupChoice(
@@ -62,17 +76,38 @@ export function evaluateRehearsal(
     });
   }
 
-  const plansIdentified = recorded.filter((item) => item.choice.kind === "planned");
   const detailsToPrepare = recorded
-    .filter((item) => item.choice.kind === "gap")
+    .filter((item) => Boolean(item.choice.preparationTask) || item.choice.kind === "gap")
     .map((item) => ({
       ...item,
       task: item.choice.preparationTask ?? defaultPreparationTask(household),
     }));
 
   const backup = backupChoice(household, answers);
-  const backupIdentified = backup?.identified === true;
-  const backupUnanswered = Boolean(answers.contact) && !backupIdentified;
+  const meetingLocationUnresolved = isMeetingLocationConflict(answers);
+  const backupApproachSelected = backup?.identified === true;
+  const backupIdentified = backupApproachSelected && !meetingLocationUnresolved;
+  const backupUnanswered = Boolean(answers.contact) && !backupApproachSelected;
+  const plansIdentified = recorded.filter((item) => {
+    if (item.choice.kind !== "planned") return false;
+    if (meetingLocationUnresolved && item.stepId === "commBackup" && item.choice.id === MEETING_BACKUP_ID) {
+      return false;
+    }
+    return true;
+  });
+
+  let backupStatusLine: string | null = null;
+  let meetingConflictNote: string | null = null;
+  if (meetingLocationUnresolved && backup?.label) {
+    backupStatusLine = MEETING_CONFLICT_STATUS;
+    meetingConflictNote = MEETING_CONFLICT_NOTE;
+  } else if (backupIdentified && backup?.label) {
+    backupStatusLine = `Backup identified in practice: ${backup.label}`;
+  } else if (backupUnanswered) {
+    backupStatusLine = "This backup is unanswered in practice.";
+  } else if (!answers.contact) {
+    backupStatusLine = "No communication backup step was recorded.";
+  }
 
   return {
     recorded,
@@ -82,6 +117,9 @@ export function evaluateRehearsal(
     backupIdentified,
     backupUnanswered,
     backupLabel: backup?.label ?? null,
+    meetingLocationUnresolved,
+    backupStatusLine,
+    meetingConflictNote,
   };
 }
 
@@ -95,11 +133,16 @@ export function compareBackupRetry(
   const firstLabel = first?.label ?? "No backup was selected.";
   const revisedLabel = revised?.label ?? "No backup was selected.";
   const firstIdentified = first?.identified === true;
-  const revisedIdentified = revised?.identified === true;
+  const revisedApproachSelected = revised?.identified === true;
+  const revisedConflict = isMeetingLocationConflict(revisedAttempt);
+  const revisedIdentified = revisedApproachSelected && !revisedConflict;
   const unchanged = firstAttempt.commBackup === revisedAttempt.commBackup;
+  const gapFullyResolved = revisedIdentified;
 
   let summary: string;
-  if (unchanged && !revisedIdentified) {
+  if (revisedConflict && revisedApproachSelected) {
+    summary = MEETING_CONFLICT_STATUS;
+  } else if (unchanged && !revisedIdentified) {
     summary =
       "Your backup answer is unchanged, and this backup is still unanswered in practice.";
   } else if (unchanged) {
@@ -117,5 +160,6 @@ export function compareBackupRetry(
     revisedIdentified,
     unchanged,
     summary,
+    gapFullyResolved,
   };
 }

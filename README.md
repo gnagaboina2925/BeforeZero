@@ -81,6 +81,21 @@ The script loads `XAI_API_KEY` from the environment or `.env.local` without prin
 2. Click **Speak my answer**, allow the microphone, say a short answer, then **Stop recording**.
 3. Review the transcript in the text box (confirm replace if text was already there), then click **Check my answer** once.
 
+## Official preparation sources (reviewed 25 Sep 2026)
+
+Scenario copy and follow-up tasks were checked against current public Ready.gov pages. This app is not FEMA-approved or endorsed.
+
+Reviewed URLs:
+
+- Power Outages: https://www.ready.gov/power-outages (page last updated 06/04/2026)
+- Make a Plan: https://www.ready.gov/plan (page last updated 09/01/2026)
+- Build a Kit: https://www.ready.gov/kit (page last updated 07/01/2026)
+- Emergency Alerts: https://www.ready.gov/alerts (page last updated 05/27/2026)
+
+The former path `https://www.ready.gov/family-emergency-communication-plan` returned 404 at review time; family communication content is cited from Make a Plan.
+
+Ready.gov power-outage guidance lists flashlights for every household member and a cell phone with chargers and a backup battery. It does not list candles as outage lighting. Make a Plan asks households to decide how they will contact one another if separated and to pick a familiar, easy-to-find meeting place. It does not tell people to travel during an emergency regardless of conditions or official directions. Build a Kit describes several days of water and food plus a flashlight and extra batteries in a designated place, not only knowing a storage spot.
+
 ## Learn more
 
 Next.js docs: [https://nextjs.org/docs](https://nextjs.org/docs)

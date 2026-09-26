@@ -16,6 +16,7 @@ export interface Choice {
   label: string;
   kind: ChoiceKind;
   preparationTask?: string;
+  hint?: string;
 }
 
 export interface Question {
@@ -89,4 +90,7 @@ export interface RehearsalResults {
   backupIdentified: boolean;
   backupUnanswered: boolean;
   backupLabel: string | null;
+  meetingLocationUnresolved: boolean;
+  backupStatusLine: string | null;
+  meetingConflictNote: string | null;
 }

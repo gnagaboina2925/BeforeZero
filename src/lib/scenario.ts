@@ -6,6 +6,21 @@ import type {
   Question,
   StepId,
 } from "./types.ts";
+import {
+  CABINET_FOLLOW_UP,
+  CANDLE_FOLLOW_UP,
+  CANDLE_HINT,
+  FLASHLIGHT_FOLLOW_UP,
+  KIT_LOCATION_FOLLOW_UP,
+  MEETING_IF_SEPARATED_FOLLOW_UP,
+  MEETING_PLACE_FOLLOW_UP,
+  MEETING_PLACE_HINT,
+  MEETING_PLACE_LABEL,
+  PHONE_CONTACT_FOLLOW_UP,
+  PHONE_LIGHT_FOLLOW_UP,
+  SUPPLY_GAP_FOLLOW_UP,
+  UPDATES_FOLLOW_UP,
+} from "./guidance.ts";
 
 export const PRODUCT_NAME = "BeforeZero";
 export const TAGLINE = "Practice before it matters.";
@@ -65,6 +80,14 @@ const UNPLANNED: Choice = {
   kind: "gap",
 };
 
+const MEETING_PLACE_CHOICE: Choice = {
+  id: "meeting-place",
+  label: MEETING_PLACE_LABEL,
+  kind: "planned",
+  hint: MEETING_PLACE_HINT,
+  preparationTask: MEETING_PLACE_FOLLOW_UP,
+};
+
 function householdPeople(household: HouseholdId): string {
   if (household === "alone") return "someone you trust";
   if (household === "roommates") return "your roommates";
@@ -90,11 +113,13 @@ function lightingQuestion(household: HouseholdId): Question {
           ? "Flashlights or lanterns I keep in a known place"
           : "Flashlights or lanterns we keep in a known place",
         kind: "planned",
+        preparationTask: FLASHLIGHT_FOLLOW_UP,
       },
       {
         id: "phone-light",
         label: "The flashlight on a phone",
         kind: "planned",
+        preparationTask: PHONE_LIGHT_FOLLOW_UP,
       },
       {
         id: "candles",
@@ -102,12 +127,14 @@ function lightingQuestion(household: HouseholdId): Question {
           ? "Candles, matches, or a lighter I already have"
           : "Candles, matches, or a lighter we already have",
         kind: "planned",
+        hint: CANDLE_HINT,
+        preparationTask: CANDLE_FOLLOW_UP,
       },
       {
         ...UNPLANNED,
         preparationTask: solo
-          ? "Choose a lighting source and decide where I keep it."
-          : "Choose a lighting source and agree on where it is kept.",
+          ? "Choose a flashlight I can find in the dark, and keep extra batteries with it."
+          : "Choose a flashlight for each household member and agree on where it is kept, with extra batteries.",
       },
     ],
   };
@@ -130,6 +157,7 @@ function contactQuestion(household: HouseholdId): Question {
         id: "phone",
         label: "A phone call or text message",
         kind: "planned",
+        preparationTask: PHONE_CONTACT_FOLLOW_UP,
       },
       {
         id: "internet-message",
@@ -177,11 +205,7 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
           label: alreadyHaveDevice,
           kind: "planned",
         },
-        {
-          id: "meeting-place",
-          label: "Meet at an agreed location",
-          kind: "planned",
-        },
+        MEETING_PLACE_CHOICE,
         {
           id: "unplanned",
           label: "I haven't planned this yet",
@@ -204,11 +228,7 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
           label: "A voice call or SMS on a cellular network",
           kind: "planned",
         },
-        {
-          id: "meeting-place",
-          label: "Meet at an agreed location",
-          kind: "planned",
-        },
+        MEETING_PLACE_CHOICE,
         {
           id: "unplanned",
           label: "I haven't planned this yet",
@@ -233,11 +253,7 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
           label: "Internet messaging if data or Wi-Fi still works",
           kind: "planned",
         },
-        {
-          id: "meeting-place",
-          label: "Meet at an agreed location",
-          kind: "planned",
-        },
+        MEETING_PLACE_CHOICE,
         {
           id: "unplanned",
           label: "I haven't planned this yet",
@@ -264,11 +280,7 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
           label: "A phone call or text message",
           kind: "planned",
         },
-        {
-          id: "meeting-place",
-          label: "An agreed meeting place",
-          kind: "planned",
-        },
+        MEETING_PLACE_CHOICE,
         {
           id: "unplanned",
           label: "I haven't planned this yet",
@@ -294,11 +306,7 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
         label: solo ? "A phone number for someone I trust" : "A phone number for each person",
         kind: "planned",
       },
-      {
-        id: "meeting-place",
-        label: "An agreed meeting place",
-        kind: "planned",
-      },
+        MEETING_PLACE_CHOICE,
       {
         id: "unplanned",
         label: "I haven't planned this yet",
@@ -313,9 +321,6 @@ function commBackupQuestion(household: HouseholdId, answers: Answers): Question 
 
 function suppliesQuestion(household: HouseholdId): Question {
   const solo = isSolo(household);
-  const supplyTask = solo
-    ? "Choose a place to keep basic supplies and make sure I know it."
-    : "Choose a place to keep basic supplies and make sure everyone knows it.";
   return {
     id: "supplies",
     stepId: "supplies",
@@ -327,30 +332,31 @@ function suppliesQuestion(household: HouseholdId): Question {
         id: "known-kit",
         label: solo ? "A kit I keep in a known place" : "A kit we keep in a known place",
         kind: "planned",
+        preparationTask: KIT_LOCATION_FOLLOW_UP,
       },
       {
         id: "cabinets",
         label: "Kitchen, bathroom, or closet shelves",
         kind: "planned",
+        preparationTask: CABINET_FOLLOW_UP,
       },
       {
         id: "figure-out",
         label: "I would figure it out at the time",
         kind: "gap",
-        preparationTask: supplyTask,
+        preparationTask: SUPPLY_GAP_FOLLOW_UP,
       },
       {
         id: "unplanned",
         label: "I haven't planned this yet",
         kind: "gap",
-        preparationTask: supplyTask,
+        preparationTask: SUPPLY_GAP_FOLLOW_UP,
       },
     ],
   };
 }
 
 function openDetailQuestion(household: HouseholdId): Question {
-  const people = householdPeople(household);
   const solo = isSolo(household);
 
   return {
@@ -367,9 +373,7 @@ function openDetailQuestion(household: HouseholdId): Question {
           ? "Where I would meet someone if I am separated"
           : "Where we would meet if we are separated",
         kind: "gap",
-        preparationTask: solo
-          ? "Choose a meeting place if I am separated from someone I trust."
-          : `Agree on a meeting place if you and ${people} are separated.`,
+        preparationTask: MEETING_IF_SEPARATED_FOLLOW_UP,
       },
       {
         id: "check-on-others",
@@ -386,8 +390,8 @@ function openDetailQuestion(household: HouseholdId): Question {
           : "How long our current supplies would last",
         kind: "gap",
         preparationTask: solo
-          ? "Review what supplies I already have and note how long they would last."
-          : "Review what supplies you already have and note how long they would last.",
+          ? "Review what food and water I already have. Ready.gov recommends non-perishable food and water for several days; this practice cannot say how long a household’s supplies would last."
+          : "Review what food and water you already have. Ready.gov recommends non-perishable food and water for several days; this practice cannot say how long a household’s supplies would last.",
       },
       {
         id: "updates",
@@ -395,8 +399,7 @@ function openDetailQuestion(household: HouseholdId): Question {
           ? "Whether I have a way to get updates without relying on one device"
           : "Whether we have a way to get updates without relying on one device",
         kind: "gap",
-        preparationTask:
-          "Identify more than one way to get public updates if one device is unavailable.",
+        preparationTask: UPDATES_FOLLOW_UP,
       },
     ],
   };
